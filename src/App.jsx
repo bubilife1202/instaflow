@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { toPng } from 'html-to-image';
 import JSZip from 'jszip';
+import { Type, Heading1, Heading2, Bold, Sparkles, Minus, BookOpen } from 'lucide-react';
 
 const THEMES = {
   'Tech Dark': 'tech-dark',
@@ -94,7 +95,9 @@ function App() {
   const [aspectRatio, setAspectRatio] = useState('4:5');
   const [isDownloading, setIsDownloading] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
+  const [instagramId, setInstagramId] = useState('');
   const slideRefs = useRef([]);
+  const textareaRef = useRef(null);
 
   useEffect(() => {
     try {
@@ -107,6 +110,23 @@ function App() {
   }, []);
 
   const slides = script.split('---').map(s => s.trim()).filter(s => s.length > 0);
+
+  // Editor Toolbar Functions
+  const insertText = (before, after = '') => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = script.substring(start, end);
+    const newText = script.substring(0, start) + before + selectedText + after + script.substring(end);
+
+    setScript(newText);
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + before.length, end + before.length);
+    }, 0);
+  };
 
   const parseInlineMarkdown = (text) => {
     const parts = [];
@@ -191,15 +211,15 @@ function App() {
 
           <div className="relative z-10 w-full h-full p-10 flex flex-col justify-center">
             {h1 && (
-              <h1 className="text-5xl font-black text-white mb-6 leading-tight line-clamp-2">
+              <h1 className="text-5xl font-black text-white mb-6 leading-tight line-clamp-2" style={{ letterSpacing: '-0.02em' }}>
                 {renderStyledText(h1.content, themeClass)}
               </h1>
             )}
 
             {h2 && (
               <div className="mb-6">
-                <div className="inline-block bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-2.5">
-                  <h2 className="text-2xl font-bold text-white line-clamp-1">
+                <div className="inline-block bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-2.5 backdrop-blur-xl bg-opacity-90">
+                  <h2 className="text-2xl font-bold text-white line-clamp-1" style={{ letterSpacing: '-0.02em' }}>
                     {renderStyledText(h2.content, themeClass)}
                   </h2>
                 </div>
@@ -209,7 +229,7 @@ function App() {
             {quotes.length > 0 && (
               <div className="mb-6 space-y-2">
                 {quotes.slice(0, 2).map((q, i) => (
-                  <div key={i} className="text-3xl font-black text-cyan-400 line-clamp-1">
+                  <div key={i} className="text-3xl font-black text-cyan-400 line-clamp-1" style={{ letterSpacing: '-0.02em' }}>
                     {renderStyledText(q.content, themeClass)}
                   </div>
                 ))}
@@ -229,7 +249,7 @@ function App() {
             {specs.length > 0 && (
               <div className="grid grid-cols-2 gap-2.5">
                 {specs.slice(0, 4).map((spec, i) => (
-                  <div key={i} className="bg-white/5 border border-white/10 p-3 backdrop-blur">
+                  <div key={i} className="bg-white/5 border border-white/10 p-3 backdrop-blur-xl rounded-lg">
                     <div className="text-[10px] text-gray-400 uppercase tracking-wider mb-1 truncate">{spec.key}</div>
                     <div className="text-sm font-bold text-white truncate">{spec.value}</div>
                   </div>
@@ -237,6 +257,13 @@ function App() {
               </div>
             )}
           </div>
+
+          {/* Instagram ID Branding */}
+          {instagramId && (
+            <div className="absolute bottom-3 right-3 text-xs text-white/40 font-semibold">
+              {instagramId}
+            </div>
+          )}
         </div>
       );
     }
@@ -245,20 +272,20 @@ function App() {
     else if (themeClass === 'biz-clean') {
       return (
         <div className="w-full h-full bg-slate-50 flex items-center justify-center p-6">
-          <div className="bg-white w-full h-full shadow-2xl p-8 relative overflow-hidden">
+          <div className="bg-white w-full h-full shadow-2xl p-8 relative overflow-hidden rounded-lg">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600" />
 
             <div className="h-full flex flex-col justify-center pl-4">
               {h1 && (
-                <h1 className="text-4xl font-black text-slate-900 mb-5 leading-tight line-clamp-2">
+                <h1 className="text-4xl font-black text-slate-900 mb-5 leading-tight line-clamp-2" style={{ letterSpacing: '-0.02em' }}>
                   {renderStyledText(h1.content, themeClass)}
                 </h1>
               )}
 
               {h2 && (
                 <div className="mb-5">
-                  <div className="bg-blue-600 text-white px-5 py-2.5 inline-block">
-                    <h2 className="text-2xl font-bold line-clamp-1">
+                  <div className="bg-blue-600 text-white px-5 py-2.5 inline-block rounded shadow-lg">
+                    <h2 className="text-2xl font-bold line-clamp-1" style={{ letterSpacing: '-0.02em' }}>
                       {renderStyledText(h2.content, themeClass)}
                     </h2>
                   </div>
@@ -300,6 +327,13 @@ function App() {
                 </div>
               )}
             </div>
+
+            {/* Instagram ID Branding */}
+            {instagramId && (
+              <div className="absolute bottom-3 right-3 text-xs text-slate-400 font-semibold">
+                {instagramId}
+              </div>
+            )}
           </div>
         </div>
       );
@@ -311,7 +345,7 @@ function App() {
         <div className="w-full h-full bg-[#fffef8] flex items-center justify-center p-12">
           <div className="text-center h-full flex flex-col justify-center max-w-md">
             {h1 && (
-              <h1 className="text-5xl font-serif text-[#2c2416] mb-6 leading-tight line-clamp-2" style={{ fontFamily: 'Georgia, serif' }}>
+              <h1 className="text-5xl font-serif text-[#2c2416] mb-6 leading-tight line-clamp-2" style={{ fontFamily: 'Georgia, serif', letterSpacing: '-0.01em' }}>
                 {renderStyledText(h1.content, themeClass)}
               </h1>
             )}
@@ -366,6 +400,13 @@ function App() {
               <div className="w-8 h-px bg-[#8B7355]/40" />
               <div className="w-1 h-1 rounded-full bg-[#8B7355]" />
             </div>
+
+            {/* Instagram ID Branding */}
+            {instagramId && (
+              <div className="absolute bottom-3 right-3 text-xs text-[#8B7355]/60 font-semibold">
+                {instagramId}
+              </div>
+            )}
           </div>
         </div>
       );
@@ -412,56 +453,115 @@ function App() {
   const themeClass = THEMES[theme];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b p-4">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-black text-gray-900">InstaFlow</h1>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <button onClick={() => setShowGuide(true)} className="px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 text-sm">
-              사용 가이드
-            </button>
-
-            <select value={Object.keys(EXAMPLE_SCRIPTS).find(key => EXAMPLE_SCRIPTS[key] === script) || ''} onChange={(e) => setScript(EXAMPLE_SCRIPTS[e.target.value])} className="px-3 py-2 border rounded-lg text-sm">
-              <option value="">예시 선택...</option>
-              {Object.keys(EXAMPLE_SCRIPTS).map(name => <option key={name} value={name}>{name}</option>)}
-            </select>
-
-            <select value={theme} onChange={(e) => setTheme(e.target.value)} className="px-3 py-2 border rounded-lg text-sm">
-              {Object.keys(THEMES).map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
-
-            <div className="flex gap-2">
-              <button onClick={() => setAspectRatio('1:1')} className={`px-3 py-2 rounded-lg text-sm font-semibold ${aspectRatio === '1:1' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>1:1</button>
-              <button onClick={() => setAspectRatio('4:5')} className={`px-3 py-2 rounded-lg text-sm font-semibold ${aspectRatio === '4:5' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>4:5</button>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      {/* Premium Header */}
+      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 shadow-xl border-b border-slate-700">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-lg flex items-center justify-center">
+                <Type className="w-6 h-6 text-white" />
+              </div>
+              <h1 className="text-2xl font-black text-white tracking-tight">InstaFlow</h1>
+              <span className="px-2 py-1 bg-cyan-500/20 text-cyan-400 text-xs font-bold rounded border border-cyan-500/30">PRO</span>
             </div>
 
-            <button onClick={downloadAll} disabled={isDownloading} className={`px-5 py-2 rounded-lg font-semibold text-sm ${isDownloading ? 'bg-gray-400' : 'bg-green-600 text-white hover:bg-green-700'}`}>
-              {isDownloading ? '다운로드 중...' : 'Download'}
-            </button>
+            <div className="flex flex-wrap items-center gap-3">
+              <button onClick={() => setShowGuide(true)} className="px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 text-sm flex items-center gap-2">
+                <BookOpen className="w-4 h-4" />
+                가이드
+              </button>
+
+              <select value={Object.keys(EXAMPLE_SCRIPTS).find(key => EXAMPLE_SCRIPTS[key] === script) || ''} onChange={(e) => setScript(EXAMPLE_SCRIPTS[e.target.value])} className="px-3 py-2 bg-slate-700 text-white border border-slate-600 rounded-lg text-sm">
+                <option value="">예시 선택...</option>
+                {Object.keys(EXAMPLE_SCRIPTS).map(name => <option key={name} value={name}>{name}</option>)}
+              </select>
+
+              <select value={theme} onChange={(e) => setTheme(e.target.value)} className="px-3 py-2 bg-slate-700 text-white border border-slate-600 rounded-lg text-sm">
+                {Object.keys(THEMES).map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+
+              <div className="flex gap-2">
+                <button onClick={() => setAspectRatio('1:1')} className={`px-3 py-2 rounded-lg text-sm font-semibold transition ${aspectRatio === '1:1' ? 'bg-cyan-500 text-white' : 'bg-slate-700 text-gray-300'}`}>1:1</button>
+                <button onClick={() => setAspectRatio('4:5')} className={`px-3 py-2 rounded-lg text-sm font-semibold transition ${aspectRatio === '4:5' ? 'bg-cyan-500 text-white' : 'bg-slate-700 text-gray-300'}`}>4:5</button>
+              </div>
+
+              <button onClick={downloadAll} disabled={isDownloading} className={`px-6 py-2 rounded-lg font-bold text-sm transition shadow-lg ${isDownloading ? 'bg-gray-400' : 'bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700'}`}>
+                {isDownloading ? (
+                  <span className="flex items-center gap-2">
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    생성 중...
+                  </span>
+                ) : '다운로드'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Main */}
-      <div className="max-w-7xl mx-auto px-6 py-4">
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-6 py-6">
         <div className="grid lg:grid-cols-2 gap-6">
-          <div className="h-[600px] flex flex-col">
-            <label className="text-sm font-bold mb-2">Script (구분: ---)</label>
-            <textarea value={script} onChange={(e) => setScript(e.target.value)} className="flex-1 p-4 border-2 rounded-lg font-mono text-sm resize-none" />
+          {/* Editor Panel */}
+          <div className="bg-white rounded-xl shadow-lg p-6 h-[700px] flex flex-col">
+            <div className="flex items-center justify-between mb-3">
+              <label className="text-sm font-bold text-gray-700">스크립트 에디터</label>
+              <input
+                type="text"
+                value={instagramId}
+                onChange={(e) => setInstagramId(e.target.value)}
+                placeholder="@your_instagram"
+                className="px-3 py-1 text-xs border border-gray-300 rounded-lg w-40"
+              />
+            </div>
+
+            {/* Editor Toolbar */}
+            <div className="flex gap-2 mb-3 pb-3 border-b">
+              <button onClick={() => insertText('# ')} className="p-2 bg-gray-100 hover:bg-gray-200 rounded transition" title="H1">
+                <Heading1 className="w-4 h-4" />
+              </button>
+              <button onClick={() => insertText('## ')} className="p-2 bg-gray-100 hover:bg-gray-200 rounded transition" title="H2">
+                <Heading2 className="w-4 h-4" />
+              </button>
+              <button onClick={() => insertText('**', '**')} className="p-2 bg-gray-100 hover:bg-gray-200 rounded transition" title="Bold">
+                <Bold className="w-4 h-4" />
+              </button>
+              <button onClick={() => insertText('*', '*')} className="p-2 bg-gray-100 hover:bg-gray-200 rounded transition" title="Highlight">
+                <Sparkles className="w-4 h-4" />
+              </button>
+              <button onClick={() => insertText('\n---\n')} className="p-2 bg-gray-100 hover:bg-gray-200 rounded transition" title="New Slide">
+                <Minus className="w-4 h-4" />
+              </button>
+            </div>
+
+            <textarea
+              ref={textareaRef}
+              value={script}
+              onChange={(e) => setScript(e.target.value)}
+              className="flex-1 p-4 border-2 border-gray-200 rounded-lg font-mono text-sm resize-none focus:border-cyan-500 focus:outline-none transition"
+              placeholder="여기에 스크립트를 작성하세요..."
+            />
           </div>
 
-          <div className="h-[600px] flex flex-col">
-            <label className="text-sm font-bold mb-2">미리보기 ({slides.length}개)</label>
-            <div className="flex-1 overflow-y-auto bg-gray-100 rounded-lg p-4">
-              <div className="space-y-4 max-w-md mx-auto">
+          {/* Preview Panel */}
+          <div className="bg-white rounded-xl shadow-lg p-6 h-[700px] flex flex-col">
+            <label className="text-sm font-bold text-gray-700 mb-4">미리보기 ({slides.length}개 슬라이드)</label>
+            <div className="flex-1 overflow-y-auto">
+              <div className="space-y-6">
                 {slides.map((slide, i) => (
-                  <div key={i}>
-                    <div ref={el => slideRefs.current[i] = el} className="relative overflow-hidden shadow-xl rounded-lg" style={{ width: '400px', height: aspectRatio === '1:1' ? '400px' : '500px' }}>
-                      {renderSlide(slide, i, themeClass)}
-                      <div className="absolute top-2 right-2 text-xs font-bold opacity-30 text-white mix-blend-difference">{i+1}/{slides.length}</div>
-                      {i < slides.length - 1 && <div className="absolute bottom-2 right-2 text-lg opacity-30">👉</div>}
+                  <div key={i} className="flex justify-center">
+                    {/* Smartphone Mockup Frame */}
+                    <div className="relative" style={{ width: '420px' }}>
+                      <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900 rounded-[40px] shadow-2xl" style={{ padding: '10px' }}>
+                        <div ref={el => slideRefs.current[i] = el} className="relative overflow-hidden rounded-[32px]" style={{ width: '400px', height: aspectRatio === '1:1' ? '400px' : '500px' }}>
+                          {renderSlide(slide, i, themeClass)}
+                          <div className="absolute top-2 right-2 text-xs font-bold opacity-30 text-white mix-blend-difference">{i+1}/{slides.length}</div>
+                          {i < slides.length - 1 && <div className="absolute bottom-2 right-2 text-lg opacity-30">👉</div>}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -478,8 +578,8 @@ function App() {
 
       {/* Guide Modal */}
       {showGuide && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowGuide(false)}>
-          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-8" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowGuide(false)}>
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-8 shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-3xl font-black">사용 가이드</h2>
               <button onClick={() => setShowGuide(false)} className="text-3xl text-gray-400 hover:text-gray-600">&times;</button>
@@ -515,33 +615,26 @@ function App() {
               </section>
 
               <section>
-                <h3 className="text-xl font-bold mb-3 text-purple-600">💡 사용 팁</h3>
+                <h3 className="text-xl font-bold mb-3 text-purple-600">🛠 에디터 툴바</h3>
                 <ul className="list-disc list-inside space-y-2 text-gray-700">
-                  <li>한 슬라이드에 너무 많은 내용을 넣지 마세요 (3-5줄 권장)</li>
-                  <li>스펙은 최대 4개까지 추천합니다</li>
-                  <li>예시 스크립트를 선택해서 참고하세요</li>
-                  <li>1:1은 피드, 4:5는 스토리에 적합합니다</li>
-                  <li>Download 버튼으로 ZIP 파일로 다운로드됩니다</li>
+                  <li>툴바 버튼으로 빠르게 마크다운 삽입</li>
+                  <li>Instagram ID를 입력하면 모든 슬라이드에 워터마크 추가</li>
+                  <li>텍스트를 선택하고 Bold/Highlight 클릭</li>
                 </ul>
               </section>
 
               <section>
-                <h3 className="text-xl font-bold mb-3 text-red-600">📌 예시</h3>
-                <div className="bg-gray-50 p-4 rounded-lg font-mono text-sm whitespace-pre-wrap">
-{`# 신제품 출시
-## 특별 할인 이벤트
----
-가격::₩299,000
-할인::20% OFF
-배송::무료배송
----
-> 지금 바로 구매하세요
-**선착순 100명** *한정*`}
-                </div>
+                <h3 className="text-xl font-bold mb-3 text-red-600">💡 사용 팁</h3>
+                <ul className="list-disc list-inside space-y-2 text-gray-700">
+                  <li>한 슬라이드에 3-5줄 권장</li>
+                  <li>스펙은 최대 4개까지</li>
+                  <li>1:1은 피드, 4:5는 스토리용</li>
+                  <li>고해상도 3x 픽셀로 다운로드됩니다</li>
+                </ul>
               </section>
             </div>
 
-            <button onClick={() => setShowGuide(false)} className="mt-6 w-full py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700">
+            <button onClick={() => setShowGuide(false)} className="mt-6 w-full py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg font-bold hover:from-blue-700 hover:to-cyan-700">
               닫기
             </button>
           </div>

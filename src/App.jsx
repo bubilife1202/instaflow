@@ -139,139 +139,209 @@ function App() {
   const renderSlide = (slideContent, index, themeClass) => {
     const elements = parseSlide(slideContent);
     const hasSpecs = elements.some(el => el.type === 'spec');
+    const specElements = elements.filter(el => el.type === 'spec');
+    const nonSpecElements = elements.filter(el => el.type !== 'spec');
 
-    // Tech Dark Theme
+    // Tech Dark Theme - 프리미엄 테크 리뷰 스타일
     if (themeClass === 'tech-dark') {
       return (
-        <div className="w-full h-full bg-gradient-to-br from-[#0a0a0a] to-[#1a1a1a] text-white font-sans p-12 flex flex-col justify-center">
-          {elements.map((el, i) => {
-            if (el.type === 'h1') {
-              return (
-                <h1 key={i} className="text-6xl font-black mb-4 leading-tight">
-                  {renderStyledText(el.content, themeClass)}
-                </h1>
-              );
-            } else if (el.type === 'h2') {
-              return (
-                <div key={i} className="inline-block border-2 border-white/30 px-6 py-3 mb-6 backdrop-blur-sm">
-                  <h2 className="text-3xl font-bold">{renderStyledText(el.content, themeClass)}</h2>
-                </div>
-              );
-            } else if (el.type === 'spec') {
-              return null; // Rendered in grid below
-            } else if (el.type === 'quote') {
-              return (
-                <blockquote key={i} className="text-4xl font-bold my-4 text-blue-400">
-                  {renderStyledText(el.content, themeClass)}
-                </blockquote>
-              );
-            } else {
-              return (
-                <p key={i} className="text-xl mb-3 leading-relaxed">
-                  {renderStyledText(el.content, themeClass)}
-                </p>
-              );
-            }
-          })}
+        <div className="w-full h-full relative overflow-hidden bg-[#000000]">
+          {/* Gradient Background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-[#1a1a1a] via-[#0a0a0a] to-[#000000]" />
 
-          {hasSpecs && (
-            <div className="grid grid-cols-2 gap-4 mt-6">
-              {elements.filter(el => el.type === 'spec').map((el, i) => (
-                <div key={i} className="border border-white/20 p-4 backdrop-blur-sm">
-                  <div className="text-sm text-gray-400 mb-1">{el.key}</div>
-                  <div className="text-lg font-bold">{el.value}</div>
+          {/* Grid Pattern Overlay */}
+          <div className="absolute inset-0 opacity-5" style={{
+            backgroundImage: 'linear-gradient(#ffffff 1px, transparent 1px), linear-gradient(90deg, #ffffff 1px, transparent 1px)',
+            backgroundSize: '40px 40px'
+          }} />
+
+          {/* Content Container */}
+          <div className="relative h-full flex flex-col justify-between p-16">
+            {/* Main Content Area */}
+            <div className="flex-1 flex flex-col justify-center">
+              {nonSpecElements.map((el, i) => {
+                if (el.type === 'h1') {
+                  return (
+                    <h1 key={i} className="text-7xl font-black mb-6 leading-[1.1] tracking-tight text-white">
+                      {renderStyledText(el.content, themeClass)}
+                    </h1>
+                  );
+                } else if (el.type === 'h2') {
+                  return (
+                    <div key={i} className="inline-block mb-8">
+                      <div className="relative px-8 py-4 bg-white/5 border-2 border-white/20 backdrop-blur-xl">
+                        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 to-blue-500/10" />
+                        <h2 className="relative text-4xl font-bold text-white tracking-wide">
+                          {renderStyledText(el.content, themeClass)}
+                        </h2>
+                      </div>
+                    </div>
+                  );
+                } else if (el.type === 'quote') {
+                  return (
+                    <blockquote key={i} className="my-8 space-y-3">
+                      <div className="text-5xl font-black text-cyan-400 leading-tight">
+                        {renderStyledText(el.content, themeClass)}
+                      </div>
+                    </blockquote>
+                  );
+                } else {
+                  return (
+                    <p key={i} className="text-2xl mb-4 text-gray-300 leading-relaxed font-light">
+                      {renderStyledText(el.content, themeClass)}
+                    </p>
+                  );
+                }
+              })}
+
+              {/* Spec Grid */}
+              {hasSpecs && (
+                <div className="grid grid-cols-2 gap-4 mt-8">
+                  {specElements.map((el, i) => (
+                    <div key={i} className="relative group">
+                      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-lg blur-sm group-hover:blur-md transition-all" />
+                      <div className="relative bg-white/5 border border-white/10 backdrop-blur-xl rounded-lg p-5">
+                        <div className="text-sm font-medium text-gray-400 mb-2 uppercase tracking-wider">{el.key}</div>
+                        <div className="text-xl font-bold text-white">{el.value}</div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
-          )}
-        </div>
-      );
-    }
 
-    // Biz Clean Theme
-    else if (themeClass === 'biz-clean') {
-      return (
-        <div className="w-full h-full bg-gray-100 flex items-center justify-center p-8">
-          <div className="bg-white shadow-2xl rounded-lg p-12 max-w-[90%] max-h-[90%] overflow-auto">
-            {elements.map((el, i) => {
-              if (el.type === 'h1') {
-                return (
-                  <h1 key={i} className="text-5xl font-black mb-4 text-slate-900 font-sans">
-                    {renderStyledText(el.content, themeClass)}
-                  </h1>
-                );
-              } else if (el.type === 'h2') {
-                return (
-                  <div key={i} className="border-4 border-blue-600 px-6 py-4 mb-6 inline-block">
-                    <h2 className="text-3xl font-bold text-slate-900">{renderStyledText(el.content, themeClass)}</h2>
-                  </div>
-                );
-              } else if (el.type === 'spec') {
-                return (
-                  <div key={i} className="flex items-center mb-3">
-                    <span className="text-blue-600 mr-3 text-2xl">✓</span>
-                    <span className="text-lg font-semibold text-slate-700">{el.key}:</span>
-                    <span className="text-lg text-slate-900 ml-2">{el.value}</span>
-                  </div>
-                );
-              } else if (el.type === 'quote') {
-                return (
-                  <blockquote key={i} className="text-3xl font-bold my-4 text-blue-600 border-l-4 border-blue-600 pl-4">
-                    {renderStyledText(el.content, themeClass)}
-                  </blockquote>
-                );
-              } else {
-                return (
-                  <p key={i} className="text-lg mb-3 text-slate-800 flex items-start font-sans">
-                    <span className="text-blue-600 mr-2">✓</span>
-                    <span>{renderStyledText(el.content, themeClass)}</span>
-                  </p>
-                );
-              }
-            })}
+            {/* Bottom Accent Line */}
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-50" />
           </div>
         </div>
       );
     }
 
-    // Emotional Essay Theme
+    // Biz Clean Theme - 기업 공식 발표 스타일
+    else if (themeClass === 'biz-clean') {
+      return (
+        <div className="w-full h-full bg-[#f8f9fa] flex items-center justify-center p-12">
+          {/* Main Card */}
+          <div className="relative w-full max-w-4xl">
+            {/* Blue Accent Bar */}
+            <div className="absolute -left-3 top-0 bottom-0 w-2 bg-gradient-to-b from-blue-600 to-blue-500 rounded-full" />
+
+            {/* Content Card */}
+            <div className="bg-white rounded-2xl shadow-2xl p-14 border border-gray-100">
+              {elements.map((el, i) => {
+                if (el.type === 'h1') {
+                  return (
+                    <h1 key={i} className="text-6xl font-black mb-6 text-slate-900 leading-[1.15] tracking-tight">
+                      {renderStyledText(el.content, themeClass)}
+                    </h1>
+                  );
+                } else if (el.type === 'h2') {
+                  return (
+                    <div key={i} className="mb-8 inline-block">
+                      <div className="bg-blue-600 text-white px-8 py-4 rounded-xl shadow-lg">
+                        <h2 className="text-4xl font-bold tracking-tight">
+                          {renderStyledText(el.content, themeClass)}
+                        </h2>
+                      </div>
+                    </div>
+                  );
+                } else if (el.type === 'spec') {
+                  return (
+                    <div key={i} className="flex items-baseline mb-5 pb-5 border-b border-gray-100 last:border-0">
+                      <span className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-4">
+                        <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </span>
+                      <span className="text-xl font-semibold text-slate-700 min-w-[140px]">{el.key}</span>
+                      <span className="text-xl text-slate-900 font-medium ml-3">{el.value}</span>
+                    </div>
+                  );
+                } else if (el.type === 'quote') {
+                  return (
+                    <blockquote key={i} className="my-8 pl-6 border-l-4 border-blue-500">
+                      <div className="text-4xl font-bold text-blue-600 leading-snug">
+                        {renderStyledText(el.content, themeClass)}
+                      </div>
+                    </blockquote>
+                  );
+                } else {
+                  return (
+                    <p key={i} className="text-2xl mb-4 text-slate-700 leading-relaxed font-normal">
+                      {renderStyledText(el.content, themeClass)}
+                    </p>
+                  );
+                }
+              })}
+
+              {/* Bottom Brand Line */}
+              <div className="mt-10 pt-8 border-t-2 border-gray-100">
+                <div className="h-1.5 w-24 bg-gradient-to-r from-blue-600 to-blue-400 rounded-full" />
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Emotional Essay Theme - 감성 에세이/브런치 스타일
     else if (themeClass === 'emotional-essay') {
       return (
-        <div className="w-full h-full bg-[#FDFBF7] flex items-center justify-center p-16">
-          <div className="text-center max-w-2xl">
+        <div className="w-full h-full bg-[#FFFEF9] flex items-center justify-center px-20 py-24">
+          <div className="max-w-2xl text-center space-y-8">
             {elements.map((el, i) => {
               if (el.type === 'h1') {
                 return (
-                  <h1 key={i} className="text-6xl font-serif mb-6 text-[#433422] leading-tight">
+                  <h1 key={i} className="text-7xl font-serif mb-10 text-[#2c2416] leading-[1.2] tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>
                     {renderStyledText(el.content, themeClass)}
                   </h1>
                 );
               } else if (el.type === 'h2') {
                 return (
-                  <h2 key={i} className="text-3xl font-serif mb-6 text-[#6B5D4F]">
-                    {renderStyledText(el.content, themeClass)}
-                  </h2>
+                  <div key={i} className="mb-10">
+                    <div className="inline-block border-t-2 border-b-2 border-[#8B7355] py-4 px-8">
+                      <h2 className="text-3xl font-serif text-[#5a4a3a] tracking-wide" style={{ fontFamily: 'Georgia, serif' }}>
+                        {renderStyledText(el.content, themeClass)}
+                      </h2>
+                    </div>
+                  </div>
                 );
               } else if (el.type === 'spec') {
                 return (
-                  <p key={i} className="text-xl my-3 text-[#433422] font-serif">
-                    {el.key}: {el.value}
-                  </p>
+                  <div key={i} className="text-center my-6">
+                    <span className="text-xl font-serif text-[#6B5D4F]" style={{ fontFamily: 'Georgia, serif' }}>
+                      {el.key}
+                    </span>
+                    <span className="mx-3 text-[#8B7355]">·</span>
+                    <span className="text-xl font-serif text-[#2c2416]" style={{ fontFamily: 'Georgia, serif' }}>
+                      {el.value}
+                    </span>
+                  </div>
                 );
               } else if (el.type === 'quote') {
                 return (
-                  <blockquote key={i} className="text-4xl font-serif my-8 text-[#8B7355] italic">
-                    {renderStyledText(el.content, themeClass)}
+                  <blockquote key={i} className="my-12 relative">
+                    <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-6xl text-[#8B7355]/20">"</div>
+                    <div className="text-5xl font-serif italic text-[#5a4a3a] leading-snug px-8" style={{ fontFamily: 'Georgia, serif' }}>
+                      {renderStyledText(el.content, themeClass)}
+                    </div>
                   </blockquote>
                 );
               } else {
                 return (
-                  <p key={i} className="text-2xl my-4 text-[#433422] leading-relaxed font-serif">
+                  <p key={i} className="text-2xl font-serif text-[#2c2416] leading-[1.8] my-6" style={{ fontFamily: 'Georgia, serif' }}>
                     {renderStyledText(el.content, themeClass)}
                   </p>
                 );
               }
             })}
+
+            {/* Decorative Element */}
+            <div className="flex items-center justify-center gap-2 mt-12 pt-8">
+              <div className="w-2 h-2 rounded-full bg-[#8B7355]" />
+              <div className="w-12 h-0.5 bg-[#8B7355]/40" />
+              <div className="w-2 h-2 rounded-full bg-[#8B7355]" />
+            </div>
           </div>
         </div>
       );

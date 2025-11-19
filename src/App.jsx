@@ -37,7 +37,9 @@ function App() {
   const [script, setScript] = useState(DEFAULT_SCRIPT);
   const [theme, setTheme] = useState('Tech Dark');
   const [aspectRatio, setAspectRatio] = useState('4:5'); // '1:1' or '4:5'
+  const [isDownloading, setIsDownloading] = useState(false);
   const slideRefs = useRef([]);
+  const downloadRef = useRef(null);
 
   // Parse script into slides
   const slides = script.split('---').map(s => s.trim()).filter(s => s.length > 0);
@@ -278,33 +280,72 @@ function App() {
 
   // Download all slides
   const downloadAll = async () => {
-    const zip = new JSZip();
+    setIsDownloading(true);
 
-    for (let i = 0; i < slideRefs.current.length; i++) {
+    // 폰트 로드 대기
+    try {
+      await document.fonts.ready;
+      await new Promise(resolve => setTimeout(resolve, 500)); // 추가 대기
+    } catch (e) {
+      console.log('Font loading check failed, continuing anyway');
+    }
+
+    const zip = new JSZip();
+    const totalSlides = slides.length;
+
+    console.log(`Starting to capture ${totalSlides} slides...`);
+
+    for (let i = 0; i < totalSlides; i++) {
       if (slideRefs.current[i]) {
         try {
-          const dataUrl = await toPng(slideRefs.current[i], {
+          console.log(`Capturing slide ${i + 1}/${totalSlides}...`);
+
+          // 약간의 딜레이
+          await new Promise(resolve => setTimeout(resolve, 300));
+
+          const element = slideRefs.current[i];
+
+          // 실제 크기로 캡처 (scale 사용)
+          const dataUrl = await toPng(element, {
             quality: 1,
-            pixelRatio: 3,
-            backgroundColor: themeClass === 'tech-dark' ? '#0a0a0a' : themeClass === 'biz-clean' ? '#f3f4f6' : '#FDFBF7'
+            pixelRatio: 4, // 높은 해상도
+            backgroundColor: themeClass === 'tech-dark' ? '#0a0a0a' : themeClass === 'biz-clean' ? '#f3f4f6' : '#FDFBF7',
+            cacheBust: true,
+            fontEmbedCSS: '',
+            skipFonts: false,
           });
 
           // Convert data URL to blob
           const response = await fetch(dataUrl);
           const blob = await response.blob();
 
-          zip.file(`slide-${i + 1}.png`, blob);
+          zip.file(`slide-${String(i + 1).padStart(2, '0')}.png`, blob);
+
+          console.log(`✓ Slide ${i + 1} captured`);
         } catch (error) {
-          console.error(`Error capturing slide ${i + 1}:`, error);
+          console.error(`✗ Error capturing slide ${i + 1}:`, error);
+          alert(`슬라이드 ${i + 1} 캡처 실패: ${error.message}`);
         }
       }
     }
 
-    const content = await zip.generateAsync({ type: 'blob' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(content);
-    link.download = 'instaflow.zip';
-    link.click();
+    try {
+      console.log('Generating ZIP file...');
+      const content = await zip.generateAsync({ type: 'blob' });
+
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(content);
+      link.download = 'instaflow.zip';
+      link.click();
+
+      console.log('✓ Download started!');
+      alert(`${totalSlides}개 슬라이드 다운로드 완료!`);
+    } catch (error) {
+      console.error('ZIP generation failed:', error);
+      alert('다운로드 실패: ' + error.message);
+    }
+
+    setIsDownloading(false);
   };
 
   const themeClass = THEMES[theme];
@@ -362,9 +403,14 @@ function App() {
             {/* Download Button */}
             <button
               onClick={downloadAll}
-              className="px-6 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors shadow-md"
+              disabled={isDownloading}
+              className={`px-6 py-2 rounded-lg font-semibold transition-colors shadow-md ${
+                isDownloading
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-green-600 text-white hover:bg-green-700'
+              }`}
             >
-              Download All
+              {isDownloading ? '다운로드 중...' : 'Download All'}
             </button>
           </div>
         </div>
@@ -392,12 +438,13 @@ function App() {
               Live Preview ({slides.length} slides)
             </label>
             <div className="flex-1 overflow-y-auto bg-gray-100 rounded-lg p-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 max-w-md mx-auto">
                 {slides.map((slide, index) => (
                   <div key={index} className="relative">
                     <div
                       ref={(el) => (slideRefs.current[index] = el)}
-                      className={`${aspectClasses} w-full relative overflow-hidden shadow-lg rounded-lg`}
+                      className={`${aspectClasses} w-full min-w-[400px] relative overflow-hidden shadow-lg rounded-lg`}
+                      style={{ minHeight: aspectRatio === '1:1' ? '400px' : '500px' }}
                     >
                       {renderSlide(slide, index, themeClass)}
 

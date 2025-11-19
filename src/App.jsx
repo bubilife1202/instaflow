@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { toPng } from 'html-to-image';
 import JSZip from 'jszip';
 
@@ -40,6 +40,17 @@ function App() {
   const [isDownloading, setIsDownloading] = useState(false);
   const slideRefs = useRef([]);
   const downloadRef = useRef(null);
+
+  // AdSense initialization
+  useEffect(() => {
+    try {
+      if (window.adsbygoogle && document.querySelector('.adsbygoogle')) {
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+      }
+    } catch (e) {
+      console.error('AdSense error:', e);
+    }
+  }, []);
 
   // Parse script into slides
   const slides = script.split('---').map(s => s.trim()).filter(s => s.length > 0);
@@ -483,6 +494,18 @@ function App() {
               {isDownloading ? '다운로드 중...' : 'Download All'}
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* Google AdSense Banner */}
+      <div className="max-w-7xl mx-auto px-6 pt-4">
+        <div className="flex justify-center">
+          <ins className="adsbygoogle"
+               style={{ display: 'block' }}
+               data-ad-client="ca-pub-8245597797545485"
+               data-ad-slot="auto"
+               data-ad-format="auto"
+               data-full-width-responsive="true"></ins>
         </div>
       </div>
 

@@ -444,13 +444,8 @@ function App() {
         </div>
       </div>
 
-      {/* AdSense */}
-      <div className="max-w-7xl mx-auto px-6 pt-3">
-        <ins className="adsbygoogle" style={{ display: 'block' }} data-ad-client="ca-pub-8245597797545485" data-ad-slot="auto" data-ad-format="auto" data-full-width-responsive="true" />
-      </div>
-
       {/* Main */}
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto px-6 py-4">
         <div className="grid lg:grid-cols-2 gap-6">
           <div className="h-[600px] flex flex-col">
             <label className="text-sm font-bold mb-2">Script (구분: ---)</label>
@@ -473,6 +468,11 @@ function App() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* AdSense */}
+        <div className="mt-8 flex justify-center">
+          <ins className="adsbygoogle" style={{ display: 'block' }} data-ad-client="ca-pub-8245597797545485" data-ad-slot="auto" data-ad-format="auto" data-full-width-responsive="true" />
         </div>
       </div>
 

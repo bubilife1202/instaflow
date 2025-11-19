@@ -141,7 +141,7 @@ function App() {
     // Tech Dark Theme
     if (themeClass === 'tech-dark') {
       return (
-        <div className="w-full h-full bg-gradient-to-br from-[#0a0a0a] to-[#1a1a1a] text-white font-['Noto_Sans_KR'] p-12 flex flex-col justify-center">
+        <div className="w-full h-full bg-gradient-to-br from-[#0a0a0a] to-[#1a1a1a] text-white font-sans p-12 flex flex-col justify-center">
           {elements.map((el, i) => {
             if (el.type === 'h1') {
               return (
@@ -194,7 +194,7 @@ function App() {
             {elements.map((el, i) => {
               if (el.type === 'h1') {
                 return (
-                  <h1 key={i} className="text-5xl font-black mb-4 text-slate-900 font-['Noto_Sans_KR']">
+                  <h1 key={i} className="text-5xl font-black mb-4 text-slate-900 font-sans">
                     {renderStyledText(el.content, themeClass)}
                   </h1>
                 );
@@ -220,7 +220,7 @@ function App() {
                 );
               } else {
                 return (
-                  <p key={i} className="text-lg mb-3 text-slate-800 flex items-start font-['Noto_Sans_KR']">
+                  <p key={i} className="text-lg mb-3 text-slate-800 flex items-start font-sans">
                     <span className="text-blue-600 mr-2">✓</span>
                     <span>{renderStyledText(el.content, themeClass)}</span>
                   </p>
@@ -240,31 +240,31 @@ function App() {
             {elements.map((el, i) => {
               if (el.type === 'h1') {
                 return (
-                  <h1 key={i} className="text-6xl font-serif mb-6 text-[#433422] leading-tight" style={{ fontFamily: 'Georgia, serif' }}>
+                  <h1 key={i} className="text-6xl font-serif mb-6 text-[#433422] leading-tight">
                     {renderStyledText(el.content, themeClass)}
                   </h1>
                 );
               } else if (el.type === 'h2') {
                 return (
-                  <h2 key={i} className="text-3xl font-serif mb-6 text-[#6B5D4F]" style={{ fontFamily: 'Georgia, serif' }}>
+                  <h2 key={i} className="text-3xl font-serif mb-6 text-[#6B5D4F]">
                     {renderStyledText(el.content, themeClass)}
                   </h2>
                 );
               } else if (el.type === 'spec') {
                 return (
-                  <p key={i} className="text-xl my-3 text-[#433422] font-serif" style={{ fontFamily: 'Georgia, serif' }}>
+                  <p key={i} className="text-xl my-3 text-[#433422] font-serif">
                     {el.key}: {el.value}
                   </p>
                 );
               } else if (el.type === 'quote') {
                 return (
-                  <blockquote key={i} className="text-4xl font-serif my-8 text-[#8B7355] italic" style={{ fontFamily: 'Georgia, serif' }}>
+                  <blockquote key={i} className="text-4xl font-serif my-8 text-[#8B7355] italic">
                     {renderStyledText(el.content, themeClass)}
                   </blockquote>
                 );
               } else {
                 return (
-                  <p key={i} className="text-2xl my-4 text-[#433422] leading-relaxed font-serif" style={{ fontFamily: 'Georgia, serif' }}>
+                  <p key={i} className="text-2xl my-4 text-[#433422] leading-relaxed font-serif">
                     {renderStyledText(el.content, themeClass)}
                   </p>
                 );
@@ -311,7 +311,7 @@ function App() {
   const aspectClasses = aspectRatio === '1:1' ? 'aspect-square' : 'aspect-[4/5]';
 
   return (
-    <div className="min-h-screen bg-gray-50 font-['Noto_Sans_KR']">
+    <div className="min-h-screen bg-gray-50 font-sans">
       {/* Header */}
       <div className="bg-white shadow-sm border-b border-gray-200 p-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">

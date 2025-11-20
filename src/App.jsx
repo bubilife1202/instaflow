@@ -463,18 +463,22 @@ function App() {
   const downloadAll = async () => {
     setIsDownloading(true);
     try {
+      // Font loading - only once at the beginning
       await document.fonts.ready;
-      await new Promise(r => setTimeout(r, 800));
+      // Minimal initial delay - reduced from 800ms to 200ms
+      await new Promise(r => setTimeout(r, 200));
     } catch (e) {}
 
     const zip = new JSZip();
     for (let i = 0; i < slides.length; i++) {
       if (slideRefs.current[i]) {
         try {
-          await new Promise(r => setTimeout(r, 400));
+          // Reduced delay between captures: 100ms instead of 400ms
+          if (i > 0) await new Promise(r => setTimeout(r, 100));
+
           const dataUrl = await toPng(slideRefs.current[i], {
             quality: 1,
-            pixelRatio: 3,
+            pixelRatio: 2, // Reduced from 3 to 2 for faster processing (still high quality: 800x800 or 800x1000)
             backgroundColor: themeClass === 'tech-dark' ? '#000' : themeClass === 'biz-clean' ? '#f8fafc' : '#fffef8',
           });
           const res = await fetch(dataUrl);

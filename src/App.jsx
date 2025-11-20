@@ -43,11 +43,16 @@ function App() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   const [showAIPrompt, setShowAIPrompt] = useState(false);
+  const [showContentModal, setShowContentModal] = useState(false);
+  const [showDesignModal, setShowDesignModal] = useState(false);
   const [instagramId, setInstagramId] = useState(() => {
     return localStorage.getItem(STORAGE_KEYS.INSTAGRAM_ID) || '';
   });
   const [backgroundImage, setBackgroundImage] = useState(null);
   const [useBackgroundImage, setUseBackgroundImage] = useState(false);
+  const [selectedDesign, setSelectedDesign] = useState(() => {
+    return localStorage.getItem(STORAGE_KEYS.DESIGN_TEMPLATE) || null;
+  });
   const slideRefs = useRef([]);
   const textareaRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -68,6 +73,12 @@ function App() {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.INSTAGRAM_ID, instagramId);
   }, [instagramId]);
+
+  useEffect(() => {
+    if (selectedDesign) {
+      localStorage.setItem(STORAGE_KEYS.DESIGN_TEMPLATE, selectedDesign);
+    }
+  }, [selectedDesign]);
 
   useEffect(() => {
     try {
@@ -108,12 +119,27 @@ function App() {
     }
   };
 
-  // Load template
+  // Load template (old system - kept for backward compatibility)
   const loadTemplate = (templateKey) => {
     const template = TEMPLATES[templateKey];
     if (template) {
       setScript(template.content);
     }
+  };
+
+  // Load content preset (new system - content only)
+  const loadContentPreset = (presetId) => {
+    const preset = SCRIPT_PRESETS[presetId];
+    if (preset) {
+      setScript(preset.content);
+      setShowContentModal(false);
+    }
+  };
+
+  // Apply design template (new system - design only)
+  const applyDesignTemplate = (templateId) => {
+    setSelectedDesign(templateId);
+    setShowDesignModal(false);
   };
 
   // Reset all content
@@ -173,7 +199,7 @@ function App() {
     });
   };
 
-  // Render slide using theme components
+  // Render slide using theme components with optional design template
   const renderSlide = (slideContent, index, themeClass) => {
     const { elements, background } = parseSlide(slideContent);
 
@@ -187,17 +213,75 @@ function App() {
       instagramId,
     };
 
-    // Render based on theme
+    // Get theme component
+    let themeComponent;
     switch (themeClass) {
       case 'tech-dark':
-        return <TechDarkTheme {...themeProps} />;
+        themeComponent = <TechDarkTheme {...themeProps} />;
+        break;
       case 'biz-clean':
-        return <BizCleanTheme {...themeProps} />;
+        themeComponent = <BizCleanTheme {...themeProps} />;
+        break;
       case 'emotional-essay':
-        return <EmotionalEssayTheme {...themeProps} />;
+        themeComponent = <EmotionalEssayTheme {...themeProps} />;
+        break;
       default:
-        return <TechDarkTheme {...themeProps} />;
+        themeComponent = <TechDarkTheme {...themeProps} />;
     }
+
+    // If no design template is selected or bgImage is present, return theme as-is
+    if (!selectedDesign || bgImage) {
+      return themeComponent;
+    }
+
+    // Apply design template overlay
+    const designTemplate = DESIGN_TEMPLATES[selectedDesign];
+    if (!designTemplate) {
+      return themeComponent;
+    }
+
+    const designStyles = applyDesignToElement(designTemplate);
+
+    return (
+      <div className="w-full h-full relative" style={designStyles}>
+        {/* Render theme with design override */}
+        <div className="absolute inset-0 opacity-0">{themeComponent}</div>
+        {/* Custom rendering with design template */}
+        <div className="w-full h-full flex items-center justify-center p-12 relative">
+          <div className="text-center max-w-md">
+            {elements.map((el, i) => {
+              if (el.type === 'h1') {
+                return <h1 key={i} className="text-5xl font-bold mb-6" style={{ color: designTemplate.textColor }}>{el.content}</h1>;
+              }
+              if (el.type === 'h2') {
+                return <h2 key={i} className="text-2xl font-semibold mb-4" style={{ color: designTemplate.accentColor }}>{el.content}</h2>;
+              }
+              if (el.type === 'quote') {
+                return <blockquote key={i} className="text-xl italic mb-4" style={{ color: designTemplate.textColor }}>{el.content}</blockquote>;
+              }
+              if (el.type === 'text') {
+                return <p key={i} className="text-lg mb-3" style={{ color: designTemplate.textColor }}>{el.content}</p>;
+              }
+              if (el.type === 'spec') {
+                return (
+                  <div key={i} className="text-base mb-2">
+                    <span style={{ color: designTemplate.accentColor }}>{el.key}</span>
+                    <span className="mx-2" style={{ color: designTemplate.textColor }}>:</span>
+                    <span style={{ color: designTemplate.textColor }}>{el.value}</span>
+                  </div>
+                );
+              }
+              return null;
+            })}
+            {instagramId && (
+              <div className="absolute bottom-3 right-3 text-xs font-semibold opacity-60" style={{ color: designTemplate.textColor }}>
+                {instagramId}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
   };
 
   const downloadAll = async () => {
@@ -338,6 +422,24 @@ function App() {
                 placeholder="@your_instagram"
                 className="px-3 py-1 text-xs border border-gray-300 rounded-lg w-40"
               />
+            </div>
+
+            {/* Content/Design Selector Buttons */}
+            <div className="flex gap-2 mb-3">
+              <button
+                onClick={() => setShowContentModal(true)}
+                className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 text-sm flex items-center justify-center gap-2 transition"
+              >
+                <FileText className="w-4 h-4" />
+                📝 내용 불러오기
+              </button>
+              <button
+                onClick={() => setShowDesignModal(true)}
+                className="flex-1 px-4 py-2 bg-purple-500 text-white rounded-lg font-semibold hover:bg-purple-600 text-sm flex items-center justify-center gap-2 transition"
+              >
+                <Palette className="w-4 h-4" />
+                🎨 디자인 변경
+              </button>
             </div>
 
             {/* Editor Toolbar */}
@@ -571,6 +673,112 @@ function App() {
                 </ol>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Content Preset Modal */}
+      {showContentModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowContentModal(false)}>
+          <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[80vh] overflow-y-auto p-8 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-3xl font-black flex items-center gap-2">
+                <FileText className="w-8 h-8 text-blue-600" />
+                📝 내용 불러오기
+              </h2>
+              <button onClick={() => setShowContentModal(false)} className="text-3xl text-gray-400 hover:text-gray-600">&times;</button>
+            </div>
+
+            <p className="text-gray-600 mb-6">
+              원하는 콘텐츠 템플릿을 선택하면 에디터의 텍스트만 변경됩니다. 디자인은 그대로 유지됩니다.
+            </p>
+
+            {/* Presets by Category */}
+            {Object.entries(SCRIPT_CATEGORIES).map(([catKey, catName]) => {
+              const presets = getScriptPresetsList().filter(p => p.category === catKey);
+              if (presets.length === 0) return null;
+
+              return (
+                <div key={catKey} className="mb-6">
+                  <h3 className="text-lg font-bold text-gray-800 mb-3">{catName}</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {presets.map(preset => (
+                      <button
+                        key={preset.id}
+                        onClick={() => loadContentPreset(preset.id)}
+                        className="text-left p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition"
+                      >
+                        <div className="font-bold text-gray-800 mb-1">{preset.title}</div>
+                        <div className="text-sm text-gray-600">{preset.description}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Design Template Modal */}
+      {showDesignModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowDesignModal(false)}>
+          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[80vh] overflow-y-auto p-8 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-3xl font-black flex items-center gap-2">
+                <Palette className="w-8 h-8 text-purple-600" />
+                🎨 디자인 변경
+              </h2>
+              <button onClick={() => setShowDesignModal(false)} className="text-3xl text-gray-400 hover:text-gray-600">&times;</button>
+            </div>
+
+            <p className="text-gray-600 mb-6">
+              원하는 디자인을 선택하면 배경과 색상만 변경됩니다. 에디터의 내용은 그대로 유지됩니다.
+            </p>
+
+            {/* Clear Design Button */}
+            <div className="mb-6">
+              <button
+                onClick={() => applyDesignTemplate(null)}
+                className={`px-4 py-2 rounded-lg font-semibold transition ${!selectedDesign ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+              >
+                ⚪ 기본 테마 사용 (디자인 없음)
+              </button>
+            </div>
+
+            {/* Designs by Category */}
+            {Object.entries(DESIGN_CATEGORIES).map(([catKey, catName]) => {
+              const designs = getDesignTemplatesList().filter(d => d.category === catKey);
+              if (designs.length === 0) return null;
+
+              return (
+                <div key={catKey} className="mb-6">
+                  <h3 className="text-lg font-bold text-gray-800 mb-3">{catName}</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {designs.map(design => {
+                      const styles = applyDesignToElement(design);
+                      return (
+                        <button
+                          key={design.id}
+                          onClick={() => applyDesignTemplate(design.id)}
+                          className={`text-left p-4 border-2 rounded-lg transition ${selectedDesign === design.id ? 'border-purple-500 ring-2 ring-purple-200' : 'border-gray-200 hover:border-purple-400'}`}
+                        >
+                          {/* Preview Box */}
+                          <div
+                            className="w-full h-20 rounded mb-2 flex items-center justify-center text-xs font-bold"
+                            style={styles}
+                          >
+                            Preview
+                          </div>
+                          <div className="font-bold text-gray-800 text-sm mb-1">{design.name}</div>
+                          <div className="text-xs text-gray-600">{design.description}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

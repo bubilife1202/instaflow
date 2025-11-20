@@ -487,13 +487,31 @@ function App() {
               <div className="space-y-6">
                 {slides.map((slide, i) => (
                   <div key={i} className="flex justify-center">
-                    {/* Smartphone Mockup Frame */}
-                    <div className="relative inline-block" style={{ width: '420px', height: aspectRatio === '1:1' ? '420px' : '520px' }}>
-                      <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-[40px] shadow-2xl p-[10px] w-full h-full">
-                        <div ref={el => slideRefs.current[i] = el} className="relative overflow-hidden rounded-[32px]" style={{ width: '400px', height: aspectRatio === '1:1' ? '400px' : '500px' }}>
-                          {renderSlide(slide, i, themeClass)}
-                          <div className="absolute top-2 right-2 text-xs font-bold opacity-30 text-white mix-blend-difference">{i+1}/{slides.length}</div>
-                          {i < slides.length - 1 && <div className="absolute bottom-2 right-2 text-lg opacity-30">👉</div>}
+                    {/* iPhone-Style Smartphone Mockup */}
+                    <div className="relative inline-block transform transition-transform hover:scale-105" style={{ width: '420px', height: aspectRatio === '1:1' ? '420px' : '520px' }}>
+                      {/* Phone Body with Gradient Bezel */}
+                      <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-[42px] shadow-2xl p-[12px] w-full h-full relative">
+                        {/* Side Buttons */}
+                        <div className="absolute -left-[2px] top-20 w-[3px] h-8 bg-gray-900 rounded-l-sm" />
+                        <div className="absolute -left-[2px] top-32 w-[3px] h-12 bg-gray-900 rounded-l-sm" />
+                        <div className="absolute -right-[2px] top-24 w-[3px] h-16 bg-gray-900 rounded-r-sm" />
+
+                        {/* Screen Container with Inner Shadow */}
+                        <div className="relative w-full h-full bg-black rounded-[32px] overflow-hidden" style={{ boxShadow: 'inset 0 0 8px rgba(0,0,0,0.6)' }}>
+                          {/* Notch */}
+                          <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-32 h-6 bg-gray-900 rounded-b-2xl z-10 flex items-center justify-center">
+                            <div className="w-16 h-1 bg-gray-800 rounded-full mt-1" />
+                            <div className="absolute right-3 top-2 w-1.5 h-1.5 bg-gray-700 rounded-full" />
+                          </div>
+
+                          {/* Actual Slide Content (for screenshot) */}
+                          <div ref={el => slideRefs.current[i] = el} className="w-full h-full" style={{ width: '396px', height: aspectRatio === '1:1' ? '396px' : '496px' }}>
+                            {renderSlide(slide, i, themeClass)}
+                          </div>
+
+                          {/* Slide Indicators (overlay, not in screenshot) */}
+                          <div className="absolute top-2 right-2 text-xs font-bold opacity-30 text-white mix-blend-difference pointer-events-none z-20">{i+1}/{slides.length}</div>
+                          {i < slides.length - 1 && <div className="absolute bottom-2 right-2 text-lg opacity-30 pointer-events-none z-20">👉</div>}
                         </div>
                       </div>
                     </div>

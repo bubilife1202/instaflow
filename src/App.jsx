@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
 import { toPng } from 'html-to-image';
 import JSZip from 'jszip';
-import { Type, Heading1, Heading2, Bold, Sparkles, Minus, BookOpen, Image as ImageIcon, Instagram } from 'lucide-react';
+import { Type, Heading1, Heading2, Bold, Sparkles, Minus, BookOpen, Image as ImageIcon, Instagram, RotateCcw, Copy, Wand2 } from 'lucide-react';
 
 // Import utilities and configuration
 import { parseSlide } from './utils/parseSlide';
 import { THEME_DISPLAY_NAMES, getThemeBackgroundColor } from './config/themeConfig';
+import { TEMPLATES, getTemplateList } from './config/templates';
 
 // Import theme components
 import { TechDarkTheme } from './components/themes/TechDarkTheme';
@@ -14,98 +15,54 @@ import { EmotionalEssayTheme } from './components/themes/EmotionalEssayTheme';
 
 const THEMES = THEME_DISPLAY_NAMES;
 
-const EXAMPLE_SCRIPTS = {
-  'Galaxy Book (테크 리뷰)': `# Galaxy Book 4 Pro
-## ₩1,890,000
----
-# 주요 스펙
-CPU::Intel Core i7-14650H
-RAM::16GB LPDDR5X
-Storage::512GB NVMe SSD
-Display::14" AMOLED 2.8K
----
-> 초경량 990g
-> 배터리 65Wh
-*최고의 이동성*을 자랑하는 **프리미엄 노트북**
----
-# 핵심 특징
-✓ AMOLED 디스플레이
-✓ Thunderbolt 4 지원
-✓ 초슬림 디자인
----
-# 완벽한 선택
-당신의 **생산성**을 한 단계 높여줄
-*최고의 파트너*입니다`,
-
-  '신제품 출시 (비즈 공지)': `# 신제품 출시
-## 2024년 12월 15일
----
-# 혁신적인 디자인
-새로운 기준을 제시합니다
----
-가격::₩299,000
-사전예약::12월 1일부터
-배송::12월 20일 시작
-특별혜택::사은품 증정
----
-> 지금 바로 사전예약하세요
-**20% 할인** *선착순 100명*
----
-# 문의하기
-고객센터: 1588-0000
-웹사이트: example.com`,
-
-  '일상 에세이 (감성)': `# 오늘의 생각
-## 작은 행복
----
-> 커피 한 잔의 여유
-아침 햇살이 참 좋았다
----
-# 소중한 순간
-매일이 새로운 시작
-그 속에서 찾는 의미
----
-> 천천히, 그러나 꾸준히
-**나만의 속도**로 걸어가기
----
-# 오늘도 감사
-작은 것에 감사하며
-*행복을 만들어가는 하루*`,
-
-  '이벤트 안내': `# 특별 이벤트
-## 100명 한정
----
-# 이벤트 내용
-참여방법::좋아요 + 댓글
-당첨인원::추첨 100명
-상품::스타벅스 기프티콘
-발표일::12월 25일
----
-> 지금 바로 참여하세요!
-*선착순이 아닌 추첨입니다*
----
-# 참여 방법
-1. 이 게시물에 좋아요
-2. 친구 태그하기
-3. 팔로우 필수
----
-# 행운을 빕니다
-많은 참여 부탁드립니다
-**모두에게 기회가 있습니다**`
+// LocalStorage keys
+const STORAGE_KEYS = {
+  SCRIPT: 'instaflow_script',
+  THEME: 'instaflow_theme',
+  ASPECT_RATIO: 'instaflow_aspect_ratio',
+  INSTAGRAM_ID: 'instaflow_instagram_id',
 };
 
 function App() {
-  const [script, setScript] = useState(EXAMPLE_SCRIPTS['Galaxy Book (테크 리뷰)']);
-  const [theme, setTheme] = useState('Tech Dark');
-  const [aspectRatio, setAspectRatio] = useState('4:5');
+  // Load from localStorage or use defaults
+  const [script, setScript] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.SCRIPT);
+    return saved || TEMPLATES['techReview'].content;
+  });
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem(STORAGE_KEYS.THEME) || 'Tech Dark';
+  });
+  const [aspectRatio, setAspectRatio] = useState(() => {
+    return localStorage.getItem(STORAGE_KEYS.ASPECT_RATIO) || '4:5';
+  });
   const [isDownloading, setIsDownloading] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
-  const [instagramId, setInstagramId] = useState('');
+  const [showAIPrompt, setShowAIPrompt] = useState(false);
+  const [instagramId, setInstagramId] = useState(() => {
+    return localStorage.getItem(STORAGE_KEYS.INSTAGRAM_ID) || '';
+  });
   const [backgroundImage, setBackgroundImage] = useState(null);
   const [useBackgroundImage, setUseBackgroundImage] = useState(false);
   const slideRefs = useRef([]);
   const textareaRef = useRef(null);
   const fileInputRef = useRef(null);
+
+  // Auto-save to localStorage
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.SCRIPT, script);
+  }, [script]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.THEME, theme);
+  }, [theme]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.ASPECT_RATIO, aspectRatio);
+  }, [aspectRatio]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.INSTAGRAM_ID, instagramId);
+  }, [instagramId]);
 
   useEffect(() => {
     try {
@@ -144,6 +101,71 @@ function App() {
       setBackgroundImage(url);
       setUseBackgroundImage(true);
     }
+  };
+
+  // Load template
+  const loadTemplate = (templateKey) => {
+    const template = TEMPLATES[templateKey];
+    if (template) {
+      setScript(template.content);
+    }
+  };
+
+  // Reset all content
+  const handleReset = () => {
+    if (confirm('모든 내용을 초기화하시겠습니까?')) {
+      setScript(TEMPLATES['techReview'].content);
+      setTheme('Tech Dark');
+      setAspectRatio('4:5');
+      setInstagramId('');
+      setBackgroundImage(null);
+      setUseBackgroundImage(false);
+      localStorage.clear();
+    }
+  };
+
+  // Copy caption text
+  const copyCaption = () => {
+    const caption = slides.map((slide, i) => {
+      const { elements } = parseSlide(slide);
+      const texts = elements
+        .filter(el => el.type === 'text' || el.type === 'quote')
+        .map(el => el.content)
+        .join('\n');
+      return texts;
+    }).filter(t => t).join('\n\n');
+
+    navigator.clipboard.writeText(caption).then(() => {
+      alert('캡션이 클립보드에 복사되었습니다!');
+    });
+  };
+
+  // Generate AI Prompt
+  const [aiTopic, setAiTopic] = useState('');
+  const generateAIPrompt = () => {
+    const prompt = `다음 주제로 인스타그램 카드뉴스 콘텐츠를 작성해주세요.
+
+주제: ${aiTopic}
+
+형식:
+- # 제목 (메인 타이틀)
+- ## 부제목 (서브 타이틀 또는 가격)
+- 키::값 (스펙 항목, 예: CPU::Intel Core i7)
+- > 인용 (강조 문구)
+- *텍스트* (하이라이트)
+- **텍스트** (굵게)
+- --- (슬라이드 구분)
+
+슬라이드는 5-8개 정도로 작성하고, 각 슬라이드는 간결하면서도 임팩트 있게 만들어주세요.`;
+
+    return prompt;
+  };
+
+  const copyAIPrompt = () => {
+    const prompt = generateAIPrompt();
+    navigator.clipboard.writeText(prompt).then(() => {
+      alert('AI 프롬프트가 복사되었습니다!\nChatGPT나 Claude에 붙여넣어 사용하세요.');
+    });
   };
 
   // Render slide using theme components
@@ -236,9 +258,14 @@ function App() {
                 가이드
               </button>
 
-              <select value={Object.keys(EXAMPLE_SCRIPTS).find(key => EXAMPLE_SCRIPTS[key] === script) || ''} onChange={(e) => setScript(EXAMPLE_SCRIPTS[e.target.value])} className="px-3 py-2 bg-slate-700 text-white border border-slate-600 rounded-lg text-sm">
-                <option value="">예시 선택...</option>
-                {Object.keys(EXAMPLE_SCRIPTS).map(name => <option key={name} value={name}>{name}</option>)}
+              <button onClick={() => setShowAIPrompt(true)} className="px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-lg font-semibold hover:from-pink-600 hover:to-purple-700 text-sm flex items-center gap-2">
+                <Wand2 className="w-4 h-4" />
+                AI 도우미
+              </button>
+
+              <select onChange={(e) => loadTemplate(e.target.value)} className="px-3 py-2 bg-slate-700 text-white border border-slate-600 rounded-lg text-sm">
+                <option value="">템플릿 선택...</option>
+                {getTemplateList().map(({ key, name }) => <option key={key} value={key}>{name}</option>)}
               </select>
 
               <select value={theme} onChange={(e) => setTheme(e.target.value)} className="px-3 py-2 bg-slate-700 text-white border border-slate-600 rounded-lg text-sm">
@@ -309,22 +336,32 @@ function App() {
             </div>
 
             {/* Editor Toolbar */}
-            <div className="flex gap-2 mb-3 pb-3 border-b">
-              <button onClick={() => insertText('# ')} className="p-2 bg-gray-100 hover:bg-gray-200 rounded transition" title="H1">
-                <Heading1 className="w-4 h-4" />
-              </button>
-              <button onClick={() => insertText('## ')} className="p-2 bg-gray-100 hover:bg-gray-200 rounded transition" title="H2">
-                <Heading2 className="w-4 h-4" />
-              </button>
-              <button onClick={() => insertText('**', '**')} className="p-2 bg-gray-100 hover:bg-gray-200 rounded transition" title="Bold">
-                <Bold className="w-4 h-4" />
-              </button>
-              <button onClick={() => insertText('*', '*')} className="p-2 bg-gray-100 hover:bg-gray-200 rounded transition" title="Highlight">
-                <Sparkles className="w-4 h-4" />
-              </button>
-              <button onClick={() => insertText('\n---\n')} className="p-2 bg-gray-100 hover:bg-gray-200 rounded transition" title="New Slide">
-                <Minus className="w-4 h-4" />
-              </button>
+            <div className="flex gap-2 mb-3 pb-3 border-b justify-between">
+              <div className="flex gap-2">
+                <button onClick={() => insertText('# ')} className="p-2 bg-gray-100 hover:bg-gray-200 rounded transition" title="H1">
+                  <Heading1 className="w-4 h-4" />
+                </button>
+                <button onClick={() => insertText('## ')} className="p-2 bg-gray-100 hover:bg-gray-200 rounded transition" title="H2">
+                  <Heading2 className="w-4 h-4" />
+                </button>
+                <button onClick={() => insertText('**', '**')} className="p-2 bg-gray-100 hover:bg-gray-200 rounded transition" title="Bold">
+                  <Bold className="w-4 h-4" />
+                </button>
+                <button onClick={() => insertText('*', '*')} className="p-2 bg-gray-100 hover:bg-gray-200 rounded transition" title="Highlight">
+                  <Sparkles className="w-4 h-4" />
+                </button>
+                <button onClick={() => insertText('\n---\n')} className="p-2 bg-gray-100 hover:bg-gray-200 rounded transition" title="New Slide">
+                  <Minus className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={copyCaption} className="p-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded transition" title="캡션 복사">
+                  <Copy className="w-4 h-4" />
+                </button>
+                <button onClick={handleReset} className="p-2 bg-red-100 hover:bg-red-200 text-red-700 rounded transition" title="초기화">
+                  <RotateCcw className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             <textarea
@@ -471,6 +508,64 @@ function App() {
             <button onClick={() => setShowGuide(false)} className="mt-6 w-full py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg font-bold hover:from-blue-700 hover:to-cyan-700">
               닫기
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* AI Prompt Generator Modal */}
+      {showAIPrompt && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowAIPrompt(false)}>
+          <div className="bg-white rounded-2xl max-w-xl w-full p-8 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-3xl font-black flex items-center gap-2">
+                <Wand2 className="w-8 h-8 text-purple-600" />
+                AI 프롬프트 생성기
+              </h2>
+              <button onClick={() => setShowAIPrompt(false)} className="text-3xl text-gray-400 hover:text-gray-600">&times;</button>
+            </div>
+
+            <div className="space-y-4">
+              <p className="text-gray-700">
+                ChatGPT나 Claude에게 가져갈 프롬프트를 생성합니다. 주제만 입력하면 InstaFlow 형식에 맞는 콘텐츠를 요청하는 프롬프트가 만들어집니다.
+              </p>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">주제를 입력하세요</label>
+                <input
+                  type="text"
+                  value={aiTopic}
+                  onChange={(e) => setAiTopic(e.target.value)}
+                  placeholder="예: 건강한 아침 루틴 만들기"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none"
+                />
+              </div>
+
+              {aiTopic && (
+                <div className="bg-gray-50 p-4 rounded-lg border-2 border-gray-200">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-bold text-gray-700">생성된 프롬프트</span>
+                    <button onClick={copyAIPrompt} className="px-3 py-1 bg-purple-600 text-white rounded text-sm hover:bg-purple-700 flex items-center gap-1">
+                      <Copy className="w-3 h-3" />
+                      복사
+                    </button>
+                  </div>
+                  <p className="text-sm text-gray-600 whitespace-pre-wrap font-mono">
+                    {generateAIPrompt()}
+                  </p>
+                </div>
+              )}
+
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <h3 className="font-bold text-blue-900 mb-2">💡 사용 방법</h3>
+                <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
+                  <li>위에 주제를 입력하세요</li>
+                  <li>"복사" 버튼을 클릭하세요</li>
+                  <li>ChatGPT 또는 Claude에 접속하세요</li>
+                  <li>복사한 프롬프트를 붙여넣으세요</li>
+                  <li>AI가 생성한 내용을 InstaFlow 에디터에 붙여넣으세요</li>
+                </ol>
+              </div>
+            </div>
           </div>
         </div>
       )}

@@ -4,7 +4,7 @@ import { renderStyledText } from '../../utils/renderStyledText.jsx';
  * Tech Dark Theme Component
  * Dark background with cyan accents, modern tech aesthetic
  */
-export const TechDarkTheme = ({ elements, bgImage, instagramId }) => {
+export const TechDarkTheme = ({ elements, bgImage, instagramId, useDesignTemplate }) => {
   const h1 = elements.find(el => el.type === 'h1');
   const h2 = elements.find(el => el.type === 'h2');
   const specs = elements.filter(el => el.type === 'spec');
@@ -12,7 +12,7 @@ export const TechDarkTheme = ({ elements, bgImage, instagramId }) => {
   const texts = elements.filter(el => el.type === 'text');
 
   return (
-    <div className="w-full h-full bg-black flex items-center justify-center relative overflow-hidden">
+    <div className={`w-full h-full flex items-center justify-center relative overflow-hidden ${useDesignTemplate ? 'bg-transparent' : 'bg-black'}`}>
       {/* Background Image with Overlay */}
       {bgImage && (
         <>
@@ -20,7 +20,7 @@ export const TechDarkTheme = ({ elements, bgImage, instagramId }) => {
           <div className="absolute inset-0 bg-black/50" />
         </>
       )}
-      {!bgImage && <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-black to-slate-900" />}
+      {!bgImage && !useDesignTemplate && <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-black to-slate-900" />}
 
       <div className="relative z-10 w-full h-full p-10 flex flex-col justify-center">
         {h1 && (

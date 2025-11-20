@@ -206,14 +206,24 @@ function App() {
     // Determine which background to use
     const bgImage = background || (useBackgroundImage ? backgroundImage : null);
 
+    // Get design template if selected (only applies when no bgImage)
+    let designStyles = null;
+    if (selectedDesign && !bgImage) {
+      const designTemplate = DESIGN_TEMPLATES[selectedDesign];
+      if (designTemplate) {
+        designStyles = applyDesignToElement(designTemplate);
+      }
+    }
+
     // Common props for all theme components
     const themeProps = {
       elements,
       bgImage,
       instagramId,
+      useDesignTemplate: !!designStyles, // Flag to make theme background transparent
     };
 
-    // Get theme component
+    // Render based on theme
     let themeComponent;
     switch (themeClass) {
       case 'tech-dark':
@@ -229,59 +239,16 @@ function App() {
         themeComponent = <TechDarkTheme {...themeProps} />;
     }
 
-    // If no design template is selected or bgImage is present, return theme as-is
-    if (!selectedDesign || bgImage) {
-      return themeComponent;
-    }
-
-    // Apply design template overlay
-    const designTemplate = DESIGN_TEMPLATES[selectedDesign];
-    if (!designTemplate) {
-      return themeComponent;
-    }
-
-    const designStyles = applyDesignToElement(designTemplate);
-
-    return (
-      <div className="w-full h-full relative" style={designStyles}>
-        {/* Render theme with design override */}
-        <div className="absolute inset-0 opacity-0">{themeComponent}</div>
-        {/* Custom rendering with design template */}
-        <div className="w-full h-full flex items-center justify-center p-12 relative">
-          <div className="text-center max-w-md">
-            {elements.map((el, i) => {
-              if (el.type === 'h1') {
-                return <h1 key={i} className="text-5xl font-bold mb-6" style={{ color: designTemplate.textColor }}>{el.content}</h1>;
-              }
-              if (el.type === 'h2') {
-                return <h2 key={i} className="text-2xl font-semibold mb-4" style={{ color: designTemplate.accentColor }}>{el.content}</h2>;
-              }
-              if (el.type === 'quote') {
-                return <blockquote key={i} className="text-xl italic mb-4" style={{ color: designTemplate.textColor }}>{el.content}</blockquote>;
-              }
-              if (el.type === 'text') {
-                return <p key={i} className="text-lg mb-3" style={{ color: designTemplate.textColor }}>{el.content}</p>;
-              }
-              if (el.type === 'spec') {
-                return (
-                  <div key={i} className="text-base mb-2">
-                    <span style={{ color: designTemplate.accentColor }}>{el.key}</span>
-                    <span className="mx-2" style={{ color: designTemplate.textColor }}>:</span>
-                    <span style={{ color: designTemplate.textColor }}>{el.value}</span>
-                  </div>
-                );
-              }
-              return null;
-            })}
-            {instagramId && (
-              <div className="absolute bottom-3 right-3 text-xs font-semibold opacity-60" style={{ color: designTemplate.textColor }}>
-                {instagramId}
-              </div>
-            )}
-          </div>
+    // If design template is selected, wrap theme with design background
+    if (designStyles) {
+      return (
+        <div className="w-full h-full relative overflow-hidden" style={designStyles}>
+          {themeComponent}
         </div>
-      </div>
-    );
+      );
+    }
+
+    return themeComponent;
   };
 
   const downloadAll = async () => {

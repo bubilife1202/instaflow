@@ -4,7 +4,7 @@ import { renderStyledText } from '../../utils/renderStyledText.jsx';
  * Biz Clean Theme Component
  * Professional white card design with blue accents
  */
-export const BizCleanTheme = ({ elements, bgImage, instagramId }) => {
+export const BizCleanTheme = ({ elements, bgImage, instagramId, useDesignTemplate }) => {
   const h1 = elements.find(el => el.type === 'h1');
   const h2 = elements.find(el => el.type === 'h2');
   const specs = elements.filter(el => el.type === 'spec');
@@ -12,7 +12,7 @@ export const BizCleanTheme = ({ elements, bgImage, instagramId }) => {
   const texts = elements.filter(el => el.type === 'text');
 
   return (
-    <div className="w-full h-full bg-slate-50 flex items-center justify-center p-6 relative overflow-hidden">
+    <div className={`w-full h-full flex items-center justify-center p-6 relative overflow-hidden ${useDesignTemplate ? 'bg-transparent' : 'bg-slate-50'}`}>
       {/* Background Image with Overlay */}
       {bgImage && (
         <>
@@ -20,7 +20,7 @@ export const BizCleanTheme = ({ elements, bgImage, instagramId }) => {
           <div className="absolute inset-0 bg-black/45" />
         </>
       )}
-      <div className={`${bgImage ? 'bg-white/95 backdrop-blur-sm' : 'bg-white'} w-full h-full shadow-2xl p-8 relative overflow-hidden rounded-lg z-10`}>
+      <div className={`${useDesignTemplate ? 'bg-white/95 backdrop-blur-sm' : bgImage ? 'bg-white/95 backdrop-blur-sm' : 'bg-white'} w-full h-full shadow-2xl p-8 relative overflow-hidden rounded-lg z-10`}>
         <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600" />
 
         <div className="h-full flex flex-col justify-center pl-4">

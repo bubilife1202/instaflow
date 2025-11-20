@@ -287,40 +287,53 @@ function App() {
   const downloadAll = async () => {
     setIsDownloading(true);
     try {
-      // Font loading - only once at the beginning
+      // Wait for fonts to load - ensures text renders correctly
       await document.fonts.ready;
-      // Minimal initial delay - reduced from 800ms to 200ms
-      await new Promise(r => setTimeout(r, 200));
+      // Minimal delay for DOM to settle
+      await new Promise(r => setTimeout(r, 100));
     } catch (e) {}
 
     const zip = new JSZip();
-    for (let i = 0; i < slides.length; i++) {
-      if (slideRefs.current[i]) {
-        try {
-          // Reduced delay between captures: 100ms instead of 400ms
-          if (i > 0) await new Promise(r => setTimeout(r, 100));
 
+    try {
+      // Parallel processing: capture all slides simultaneously using Promise.all
+      const capturePromises = slides.map(async (slide, i) => {
+        if (!slideRefs.current[i]) return null;
+
+        try {
           const dataUrl = await toPng(slideRefs.current[i], {
             quality: 1,
-            pixelRatio: 2, // Reduced from 3 to 2 for faster processing (still high quality: 800x800 or 800x1000)
+            pixelRatio: 2, // High quality at 2x (800x800 or 800x1000)
             backgroundColor: getThemeBackgroundColor(themeClass),
           });
           const res = await fetch(dataUrl);
           const blob = await res.blob();
-          zip.file(`slide-${String(i + 1).padStart(2, '0')}.png`, blob);
+          return { index: i, blob };
         } catch (err) {
-          console.error('Error:', err);
+          console.error(`Error capturing slide ${i + 1}:`, err);
+          return null;
         }
-      }
-    }
+      });
 
-    try {
+      // Wait for all captures to complete in parallel
+      const results = await Promise.all(capturePromises);
+
+      // Add captured slides to zip in order
+      results.forEach(result => {
+        if (result && result.blob) {
+          zip.file(`slide-${String(result.index + 1).padStart(2, '0')}.png`, result.blob);
+        }
+      });
+
+      // Generate and download zip file
       const content = await zip.generateAsync({ type: 'blob' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(content);
       link.download = 'instaflow.zip';
       link.click();
-    } catch (err) {}
+    } catch (err) {
+      console.error('Download error:', err);
+    }
 
     setIsDownloading(false);
   };

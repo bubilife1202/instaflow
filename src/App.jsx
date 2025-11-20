@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { toPng } from 'html-to-image';
 import JSZip from 'jszip';
-import { Type, Heading1, Heading2, Bold, Sparkles, Minus, BookOpen } from 'lucide-react';
+import { Type, Heading1, Heading2, Bold, Sparkles, Minus, BookOpen, Image as ImageIcon } from 'lucide-react';
 
 const THEMES = {
   'Tech Dark': 'tech-dark',
@@ -96,8 +96,11 @@ function App() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   const [instagramId, setInstagramId] = useState('');
+  const [backgroundImage, setBackgroundImage] = useState(null);
+  const [useBackgroundImage, setUseBackgroundImage] = useState(false);
   const slideRefs = useRef([]);
   const textareaRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     try {
@@ -126,6 +129,16 @@ function App() {
       textarea.focus();
       textarea.setSelectionRange(start + before.length, end + before.length);
     }, 0);
+  };
+
+  // Background Image Upload Handler
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file && file.type.startsWith('image/')) {
+      const url = URL.createObjectURL(file);
+      setBackgroundImage(url);
+      setUseBackgroundImage(true);
+    }
   };
 
   const parseInlineMarkdown = (text) => {
@@ -182,8 +195,16 @@ function App() {
 
   const parseSlide = (content) => {
     const lines = content.split('\n').filter(l => l.trim().length > 0);
-    return lines.map(line => {
+    let slideBackground = null;
+
+    const elements = lines.map(line => {
       line = line.trim();
+      // Parse [bg: url] syntax for per-slide backgrounds
+      if (line.match(/^\[bg:\s*.+\]$/)) {
+        const match = line.match(/^\[bg:\s*(.+)\]$/);
+        if (match) slideBackground = match[1].trim();
+        return null;
+      }
       if (line.startsWith('# ')) return { type: 'h1', content: line.slice(2) };
       else if (line.startsWith('## ')) return { type: 'h2', content: line.slice(3) };
       else if (line.includes('::')) {
@@ -192,22 +213,34 @@ function App() {
       }
       else if (line.startsWith('> ')) return { type: 'quote', content: line.slice(2) };
       else return { type: 'text', content: line };
-    });
+    }).filter(el => el !== null);
+
+    return { elements, background: slideBackground };
   };
 
   const renderSlide = (slideContent, index, themeClass) => {
-    const elements = parseSlide(slideContent);
+    const { elements, background } = parseSlide(slideContent);
     const h1 = elements.find(el => el.type === 'h1');
     const h2 = elements.find(el => el.type === 'h2');
     const specs = elements.filter(el => el.type === 'spec');
     const quotes = elements.filter(el => el.type === 'quote');
     const texts = elements.filter(el => el.type === 'text');
 
+    // Determine which background to use
+    const bgImage = background || (useBackgroundImage ? backgroundImage : null);
+
     // 🌑 TECH DARK
     if (themeClass === 'tech-dark') {
       return (
         <div className="w-full h-full bg-black flex items-center justify-center relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-black to-slate-900" />
+          {/* Background Image with Overlay */}
+          {bgImage && (
+            <>
+              <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${bgImage})` }} />
+              <div className="absolute inset-0 bg-black/50" />
+            </>
+          )}
+          {!bgImage && <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-black to-slate-900" />}
 
           <div className="relative z-10 w-full h-full p-10 flex flex-col justify-center">
             {h1 && (
@@ -271,8 +304,15 @@ function App() {
     // 💼 BIZ CLEAN
     else if (themeClass === 'biz-clean') {
       return (
-        <div className="w-full h-full bg-slate-50 flex items-center justify-center p-6">
-          <div className="bg-white w-full h-full shadow-2xl p-8 relative overflow-hidden rounded-lg">
+        <div className="w-full h-full bg-slate-50 flex items-center justify-center p-6 relative overflow-hidden">
+          {/* Background Image with Overlay */}
+          {bgImage && (
+            <>
+              <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${bgImage})` }} />
+              <div className="absolute inset-0 bg-black/45" />
+            </>
+          )}
+          <div className={`${bgImage ? 'bg-white/95 backdrop-blur-sm' : 'bg-white'} w-full h-full shadow-2xl p-8 relative overflow-hidden rounded-lg z-10`}>
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600" />
 
             <div className="h-full flex flex-col justify-center pl-4">
@@ -342,18 +382,25 @@ function App() {
     // 📖 EMOTIONAL ESSAY
     else if (themeClass === 'emotional-essay') {
       return (
-        <div className="w-full h-full bg-[#fffef8] flex items-center justify-center p-12">
-          <div className="text-center h-full flex flex-col justify-center max-w-md">
+        <div className="w-full h-full bg-[#fffef8] flex items-center justify-center p-12 relative overflow-hidden">
+          {/* Background Image with Overlay */}
+          {bgImage && (
+            <>
+              <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${bgImage})` }} />
+              <div className="absolute inset-0 bg-black/40" />
+            </>
+          )}
+          <div className="text-center h-full flex flex-col justify-center max-w-md relative z-10">
             {h1 && (
-              <h1 className="text-5xl font-serif text-[#2c2416] mb-6 leading-tight line-clamp-2" style={{ fontFamily: 'Georgia, serif', letterSpacing: '-0.01em' }}>
+              <h1 className={`text-5xl font-serif ${bgImage ? 'text-white' : 'text-[#2c2416]'} mb-6 leading-tight line-clamp-2`} style={{ fontFamily: 'Georgia, serif', letterSpacing: '-0.01em' }}>
                 {renderStyledText(h1.content, themeClass)}
               </h1>
             )}
 
             {h2 && (
               <div className="mb-6">
-                <div className="border-t-2 border-b-2 border-[#8B7355] py-2.5 px-5 inline-block">
-                  <h2 className="text-xl font-serif text-[#5a4a3a] line-clamp-1" style={{ fontFamily: 'Georgia, serif' }}>
+                <div className={`border-t-2 border-b-2 ${bgImage ? 'border-white' : 'border-[#8B7355]'} py-2.5 px-5 inline-block`}>
+                  <h2 className={`text-xl font-serif ${bgImage ? 'text-white' : 'text-[#5a4a3a]'} line-clamp-1`} style={{ fontFamily: 'Georgia, serif' }}>
                     {renderStyledText(h2.content, themeClass)}
                   </h2>
                 </div>
@@ -364,8 +411,8 @@ function App() {
               <div className="mb-6 space-y-4">
                 {quotes.slice(0, 2).map((q, i) => (
                   <blockquote key={i} className="relative">
-                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 text-4xl text-[#8B7355]/20">"</div>
-                    <div className="text-3xl font-serif italic text-[#5a4a3a] px-2 line-clamp-2" style={{ fontFamily: 'Georgia, serif' }}>
+                    <div className={`absolute -top-3 left-1/2 transform -translate-x-1/2 text-4xl ${bgImage ? 'text-white/30' : 'text-[#8B7355]/20'}`}>"</div>
+                    <div className={`text-3xl font-serif italic ${bgImage ? 'text-white' : 'text-[#5a4a3a]'} px-2 line-clamp-2`} style={{ fontFamily: 'Georgia, serif' }}>
                       {renderStyledText(q.content, themeClass)}
                     </div>
                   </blockquote>
@@ -376,7 +423,7 @@ function App() {
             {texts.length > 0 && (
               <div className="mb-6 space-y-3">
                 {texts.slice(0, 3).map((t, i) => (
-                  <p key={i} className="text-lg font-serif text-[#2c2416] leading-relaxed line-clamp-2" style={{ fontFamily: 'Georgia, serif' }}>
+                  <p key={i} className={`text-lg font-serif ${bgImage ? 'text-white' : 'text-[#2c2416]'} leading-relaxed line-clamp-2`} style={{ fontFamily: 'Georgia, serif' }}>
                     {renderStyledText(t.content, themeClass)}
                   </p>
                 ))}
@@ -387,23 +434,23 @@ function App() {
               <div className="space-y-2">
                 {specs.slice(0, 3).map((spec, i) => (
                   <div key={i} className="text-center text-base">
-                    <span className="font-serif text-[#6B5D4F]" style={{ fontFamily: 'Georgia, serif' }}>{spec.key}</span>
-                    <span className="mx-2 text-[#8B7355]">·</span>
-                    <span className="font-serif text-[#2c2416]" style={{ fontFamily: 'Georgia, serif' }}>{spec.value}</span>
+                    <span className={`font-serif ${bgImage ? 'text-white/80' : 'text-[#6B5D4F]'}`} style={{ fontFamily: 'Georgia, serif' }}>{spec.key}</span>
+                    <span className={`mx-2 ${bgImage ? 'text-white/60' : 'text-[#8B7355]'}`}>·</span>
+                    <span className={`font-serif ${bgImage ? 'text-white' : 'text-[#2c2416]'}`} style={{ fontFamily: 'Georgia, serif' }}>{spec.value}</span>
                   </div>
                 ))}
               </div>
             )}
 
             <div className="flex items-center justify-center gap-2 mt-8">
-              <div className="w-1 h-1 rounded-full bg-[#8B7355]" />
-              <div className="w-8 h-px bg-[#8B7355]/40" />
-              <div className="w-1 h-1 rounded-full bg-[#8B7355]" />
+              <div className={`w-1 h-1 rounded-full ${bgImage ? 'bg-white/60' : 'bg-[#8B7355]'}`} />
+              <div className={`w-8 h-px ${bgImage ? 'bg-white/40' : 'bg-[#8B7355]/40'}`} />
+              <div className={`w-1 h-1 rounded-full ${bgImage ? 'bg-white/60' : 'bg-[#8B7355]'}`} />
             </div>
 
             {/* Instagram ID Branding */}
             {instagramId && (
-              <div className="absolute bottom-3 right-3 text-xs text-[#8B7355]/60 font-semibold">
+              <div className={`absolute bottom-3 right-3 text-xs ${bgImage ? 'text-white/50' : 'text-[#8B7355]/60'} font-semibold`}>
                 {instagramId}
               </div>
             )}
@@ -485,6 +532,32 @@ function App() {
                 <button onClick={() => setAspectRatio('1:1')} className={`px-3 py-2 rounded-lg text-sm font-semibold transition ${aspectRatio === '1:1' ? 'bg-cyan-500 text-white' : 'bg-slate-700 text-gray-300'}`}>1:1</button>
                 <button onClick={() => setAspectRatio('4:5')} className={`px-3 py-2 rounded-lg text-sm font-semibold transition ${aspectRatio === '4:5' ? 'bg-cyan-500 text-white' : 'bg-slate-700 text-gray-300'}`}>4:5</button>
               </div>
+
+              {/* Background Image Controls */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="px-3 py-2 bg-slate-700 text-white rounded-lg text-sm hover:bg-slate-600 transition flex items-center gap-2"
+                title="Upload Background Image"
+              >
+                <ImageIcon className="w-4 h-4" />
+                {backgroundImage ? '✓' : '배경'}
+              </button>
+              {backgroundImage && (
+                <button
+                  onClick={() => setUseBackgroundImage(!useBackgroundImage)}
+                  className={`px-3 py-2 rounded-lg text-sm font-semibold transition ${useBackgroundImage ? 'bg-cyan-500 text-white' : 'bg-slate-700 text-gray-300'}`}
+                  title="Toggle Background Image"
+                >
+                  {useBackgroundImage ? 'BG ON' : 'BG OFF'}
+                </button>
+              )}
 
               <button onClick={downloadAll} disabled={isDownloading} className={`px-6 py-2 rounded-lg font-bold text-sm transition shadow-lg ${isDownloading ? 'bg-gray-400' : 'bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700'}`}>
                 {isDownloading ? (
@@ -596,6 +669,17 @@ function App() {
                   <div><code className="text-pink-600">*텍스트*</code> → 하이라이트</div>
                   <div><code className="text-pink-600">**텍스트**</code> → 굵게</div>
                   <div><code className="text-pink-600">---</code> → 슬라이드 구분</div>
+                  <div><code className="text-pink-600">[bg: 이미지URL]</code> → 슬라이드별 배경 이미지 (선택)</div>
+                </div>
+              </section>
+
+              <section>
+                <h3 className="text-xl font-bold mb-3 text-cyan-600">🖼 배경 이미지</h3>
+                <div className="space-y-2 text-gray-700">
+                  <p><strong>배경</strong> 버튼으로 이미지 업로드 (전체 슬라이드 적용)</p>
+                  <p><strong>BG ON/OFF</strong> 토글로 배경 사용 여부 전환</p>
+                  <p>슬라이드별로 다른 배경을 쓰려면 <code className="text-pink-600 bg-gray-100 px-1 rounded">[bg: URL]</code> 문법 사용</p>
+                  <p className="text-sm text-gray-500">※ 배경 이미지 사용 시 텍스트 가독성을 위해 자동으로 어두운 오버레이가 적용됩니다</p>
                 </div>
               </section>
 

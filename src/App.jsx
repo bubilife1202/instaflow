@@ -208,8 +208,9 @@ function App() {
 
     // Get design template if selected (only applies when no bgImage)
     let designStyles = null;
+    let designTemplate = null;
     if (selectedDesign && !bgImage) {
-      const designTemplate = DESIGN_TEMPLATES[selectedDesign];
+      designTemplate = DESIGN_TEMPLATES[selectedDesign];
       if (designTemplate) {
         designStyles = applyDesignToElement(designTemplate);
       }
@@ -221,6 +222,11 @@ function App() {
       bgImage,
       instagramId,
       useDesignTemplate: !!designStyles, // Flag to make theme background transparent
+      designColors: designTemplate ? {
+        textColor: designTemplate.textColor,
+        accentColor: designTemplate.accentColor,
+        highlightColor: designTemplate.highlightColor || designTemplate.accentColor,
+      } : null,
     };
 
     // Render based on theme

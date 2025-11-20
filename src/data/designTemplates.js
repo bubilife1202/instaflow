@@ -60,6 +60,61 @@ export const DESIGN_TEMPLATES = {
     pattern: null,
   },
 
+  'fireOrange': {
+    id: 'fireOrange',
+    name: '🔥 Fire Orange',
+    category: 'gradient',
+    description: '열정적인 오렌지',
+    background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+    textColor: '#ffffff',
+    accentColor: '#ffd700',
+    pattern: null,
+  },
+
+  'deepOcean': {
+    id: 'deepOcean',
+    name: '🐋 Deep Ocean',
+    category: 'gradient',
+    description: '깊은 바다',
+    background: 'linear-gradient(135deg, #667db6 0%, #0082c8 50%, #0082c8 100%, #667db6 100%)',
+    textColor: '#ffffff',
+    accentColor: '#4dd0e1',
+    pattern: null,
+  },
+
+  'cherryBlossom': {
+    id: 'cherryBlossom',
+    name: '🌸 Cherry Blossom',
+    category: 'gradient',
+    description: '벚꽃 그라디언트',
+    background: 'linear-gradient(120deg, #ffecd2 0%, #fcb69f 100%)',
+    textColor: '#8b4f5c',
+    accentColor: '#d4697c',
+    pattern: null,
+  },
+
+  'midnightBlue': {
+    id: 'midnightBlue',
+    name: '🌙 Midnight Blue',
+    category: 'gradient',
+    description: '한밤의 푸른빛',
+    background: 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)',
+    textColor: '#ffffff',
+    accentColor: '#a8dadc',
+    pattern: null,
+  },
+
+  'goldenHour': {
+    id: 'goldenHour',
+    name: '✨ Golden Hour',
+    category: 'gradient',
+    description: '황금빛 시간',
+    background: 'linear-gradient(135deg, #f7b733 0%, #fc4a1a 100%)',
+    textColor: '#ffffff',
+    accentColor: '#fff3e0',
+    pattern: null,
+  },
+
   // Pattern Designs
   'dotPattern': {
     id: 'dotPattern',
@@ -119,6 +174,42 @@ export const DESIGN_TEMPLATES = {
     accentColor: '#60a5fa',
     pattern: 'repeating-radial-gradient(circle at 0 0, transparent 0, rgba(255,255,255,0.05) 10px, transparent 20px)',
     patternSize: 'auto',
+  },
+
+  'checkerboard': {
+    id: 'checkerboard',
+    name: '♟️ Checkerboard',
+    category: 'pattern',
+    description: '체스판 패턴',
+    background: '#2c2c2c',
+    textColor: '#ffffff',
+    accentColor: '#f4f4f4',
+    pattern: 'conic-gradient(rgba(255,255,255,0.1) 90deg, rgba(255,255,255,0.05) 90deg 180deg, rgba(255,255,255,0.1) 180deg 270deg, rgba(255,255,255,0.05) 270deg)',
+    patternSize: '40px 40px',
+  },
+
+  'crosshatch': {
+    id: 'crosshatch',
+    name: '✖️ Crosshatch',
+    category: 'pattern',
+    description: '크로스해치 패턴',
+    background: '#3c3c3c',
+    textColor: '#ffffff',
+    accentColor: '#ffa500',
+    pattern: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,165,0,0.1) 10px, rgba(255,165,0,0.1) 11px), repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(255,165,0,0.1) 10px, rgba(255,165,0,0.1) 11px)',
+    patternSize: 'auto',
+  },
+
+  'circuitBoard': {
+    id: 'circuitBoard',
+    name: '⚡ Circuit Board',
+    category: 'pattern',
+    description: '회로 기판',
+    background: '#1a1a1a',
+    textColor: '#00ff00',
+    accentColor: '#00ffff',
+    pattern: 'linear-gradient(rgba(0,255,0,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,0,0.03) 1px, transparent 1px)',
+    patternSize: '20px 20px',
   },
 
   // Solid Colors with Texture
@@ -183,6 +274,81 @@ export const DESIGN_TEMPLATES = {
     patternSize: 'auto',
     glow: '0 0 20px rgba(255,110,199,0.5)',
   },
+
+  'neonGreen': {
+    id: 'neonGreen',
+    name: '💚 Neon Green',
+    category: 'neon',
+    description: '네온 그린 라이트',
+    background: 'linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%)',
+    textColor: '#39ff14',
+    accentColor: '#00ff00',
+    pattern: 'radial-gradient(circle, rgba(57,255,20,0.05) 1px, transparent 1px)',
+    patternSize: '25px 25px',
+    glow: '0 0 15px rgba(57,255,20,0.6)',
+  },
+
+  'electricPurple': {
+    id: 'electricPurple',
+    name: '⚡ Electric Purple',
+    category: 'neon',
+    description: '전기 보라빛',
+    background: 'linear-gradient(135deg, #1a0033 0%, #330066 50%, #1a0033 100%)',
+    textColor: '#bf00ff',
+    accentColor: '#ff00ff',
+    pattern: 'radial-gradient(circle, rgba(191,0,255,0.05) 1px, transparent 1px)',
+    patternSize: '30px 30px',
+    glow: '0 0 18px rgba(191,0,255,0.7)',
+  },
+
+  // Vintage/Retro Designs
+  'vintagePaper': {
+    id: 'vintagePaper',
+    name: '📜 Vintage Paper',
+    category: 'vintage',
+    description: '빈티지 종이',
+    background: '#f4e8d0',
+    textColor: '#3e2723',
+    accentColor: '#8b4513',
+    pattern: 'radial-gradient(circle, rgba(139,69,19,0.02) 1px, transparent 1px)',
+    patternSize: '20px 20px',
+  },
+
+  'retroNewspaper': {
+    id: 'retroNewspaper',
+    name: '📰 Retro Newspaper',
+    category: 'vintage',
+    description: '레트로 신문',
+    background: '#e8dcc4',
+    textColor: '#1a1a1a',
+    accentColor: '#8b0000',
+    pattern: 'repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(0,0,0,0.03) 1px, rgba(0,0,0,0.03) 2px)',
+    patternSize: 'auto',
+  },
+
+  'vintagePoster': {
+    id: 'vintagePoster',
+    name: '🎭 Vintage Poster',
+    category: 'vintage',
+    description: '빈티지 포스터',
+    background: 'linear-gradient(135deg, #d4a373 0%, #c8956e 100%)',
+    textColor: '#2c1810',
+    accentColor: '#8b1a1a',
+    pattern: 'repeating-radial-gradient(circle at 0 0, transparent 0, rgba(0,0,0,0.05) 10px, transparent 20px)',
+    patternSize: 'auto',
+  },
+
+  'retro8Bit': {
+    id: 'retro8Bit',
+    name: '🎮 Retro 8-Bit',
+    category: 'vintage',
+    description: '8비트 레트로',
+    background: '#1c1c1c',
+    textColor: '#00ff00',
+    accentColor: '#ffff00',
+    pattern: 'repeating-conic-gradient(#2a2a2a 0% 25%, #1c1c1c 0% 50%)',
+    patternSize: '20px 20px',
+  },
 };
 
 /**
@@ -214,6 +380,7 @@ export const DESIGN_CATEGORIES = {
   pattern: '🎨 패턴',
   solid: '🎯 단색',
   neon: '💡 네온',
+  vintage: '📻 빈티지',
 };
 
 /**

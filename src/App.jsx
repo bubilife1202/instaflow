@@ -1,12 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
 import { toPng } from 'html-to-image';
 import JSZip from 'jszip';
-import { Type, Heading1, Heading2, Bold, Sparkles, Minus, BookOpen, Image as ImageIcon, Instagram, RotateCcw, Copy, Wand2 } from 'lucide-react';
+import { Type, Heading1, Heading2, Bold, Sparkles, Minus, BookOpen, Image as ImageIcon, Instagram, RotateCcw, Copy, Wand2, FileText, Palette } from 'lucide-react';
 
 // Import utilities and configuration
 import { parseSlide } from './utils/parseSlide';
 import { THEME_DISPLAY_NAMES, getThemeBackgroundColor } from './config/themeConfig';
 import { TEMPLATES, getTemplateList } from './config/templates';
+
+// Import data presets
+import { SCRIPT_PRESETS, getScriptPresetsList, SCRIPT_CATEGORIES } from './data/scriptPresets';
+import { DESIGN_TEMPLATES, getDesignTemplatesList, DESIGN_CATEGORIES, applyDesignToElement } from './data/designTemplates';
 
 // Import theme components
 import { TechDarkTheme } from './components/themes/TechDarkTheme';
@@ -21,13 +25,14 @@ const STORAGE_KEYS = {
   THEME: 'instaflow_theme',
   ASPECT_RATIO: 'instaflow_aspect_ratio',
   INSTAGRAM_ID: 'instaflow_instagram_id',
+  DESIGN_TEMPLATE: 'instaflow_design_template',
 };
 
 function App() {
-  // Load from localStorage or use defaults
+  // Load from localStorage or use tutorial as default
   const [script, setScript] = useState(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.SCRIPT);
-    return saved || TEMPLATES['techReview'].content;
+    return saved || SCRIPT_PRESETS['tutorial'].content;
   });
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem(STORAGE_KEYS.THEME) || 'Tech Dark';

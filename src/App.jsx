@@ -554,8 +554,8 @@ function App() {
                 {slides.map((slide, i) => (
                   <div key={i} className="flex justify-center">
                     {/* Smartphone Mockup Frame */}
-                    <div className="relative" style={{ width: '420px' }}>
-                      <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900 rounded-[40px] shadow-2xl" style={{ padding: '10px' }}>
+                    <div className="relative inline-block" style={{ width: '420px', height: aspectRatio === '1:1' ? '420px' : '520px' }}>
+                      <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-[40px] shadow-2xl p-[10px] w-full h-full">
                         <div ref={el => slideRefs.current[i] = el} className="relative overflow-hidden rounded-[32px]" style={{ width: '400px', height: aspectRatio === '1:1' ? '400px' : '500px' }}>
                           {renderSlide(slide, i, themeClass)}
                           <div className="absolute top-2 right-2 text-xs font-bold opacity-30 text-white mix-blend-difference">{i+1}/{slides.length}</div>

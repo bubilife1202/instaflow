@@ -16,6 +16,9 @@ import { DESIGN_TEMPLATES, getDesignTemplatesList, DESIGN_CATEGORIES, applyDesig
 import { TechDarkTheme } from './components/themes/TechDarkTheme';
 import { BizCleanTheme } from './components/themes/BizCleanTheme';
 import { EmotionalEssayTheme } from './components/themes/EmotionalEssayTheme';
+import { MinimalistCardTheme } from './components/themes/MinimalistCardTheme';
+import { BoldMagazineTheme } from './components/themes/BoldMagazineTheme';
+import { InstagramStoryTheme } from './components/themes/InstagramStoryTheme';
 
 const THEMES = THEME_DISPLAY_NAMES;
 
@@ -240,6 +243,15 @@ function App() {
         break;
       case 'emotional-essay':
         themeComponent = <EmotionalEssayTheme {...themeProps} />;
+        break;
+      case 'minimalist-card':
+        themeComponent = <MinimalistCardTheme {...themeProps} />;
+        break;
+      case 'bold-magazine':
+        themeComponent = <BoldMagazineTheme {...themeProps} />;
+        break;
+      case 'instagram-story':
+        themeComponent = <InstagramStoryTheme {...themeProps} />;
         break;
       default:
         themeComponent = <TechDarkTheme {...themeProps} />;

@@ -1,4 +1,4 @@
-import { renderStyledText } from '../../utils/renderStyledText';
+import { renderStyledText } from '../../utils/renderStyledText.jsx';
 
 /**
  * Tech Dark Theme Component

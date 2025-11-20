@@ -1,4 +1,4 @@
-import { renderStyledText } from '../../utils/renderStyledText';
+import { renderStyledText } from '../../utils/renderStyledText.jsx';
 
 /**
  * Biz Clean Theme Component

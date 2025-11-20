@@ -3,11 +3,16 @@ import { toPng } from 'html-to-image';
 import JSZip from 'jszip';
 import { Type, Heading1, Heading2, Bold, Sparkles, Minus, BookOpen, Image as ImageIcon, Instagram } from 'lucide-react';
 
-const THEMES = {
-  'Tech Dark': 'tech-dark',
-  'Biz Clean': 'biz-clean',
-  'Emotional Essay': 'emotional-essay'
-};
+// Import utilities and configuration
+import { parseSlide } from './utils/parseSlide';
+import { THEME_DISPLAY_NAMES, getThemeBackgroundColor } from './config/themeConfig';
+
+// Import theme components
+import { TechDarkTheme } from './components/themes/TechDarkTheme';
+import { BizCleanTheme } from './components/themes/BizCleanTheme';
+import { EmotionalEssayTheme } from './components/themes/EmotionalEssayTheme';
+
+const THEMES = THEME_DISPLAY_NAMES;
 
 const EXAMPLE_SCRIPTS = {
   'Galaxy Book (테크 리뷰)': `# Galaxy Book 4 Pro
@@ -141,322 +146,30 @@ function App() {
     }
   };
 
-  const parseInlineMarkdown = (text) => {
-    const parts = [];
-    let lastIndex = 0;
-    const boldRegex = /\*\*(.+?)\*\*/g;
-    const boldMatches = [];
-    let match;
-
-    while ((match = boldRegex.exec(text)) !== null) {
-      boldMatches.push({ start: match.index, end: match.index + match[0].length, text: match[1], type: 'bold' });
-    }
-
-    const highlightRegex = /(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g;
-    const highlightMatches = [];
-
-    while ((match = highlightRegex.exec(text)) !== null) {
-      highlightMatches.push({ start: match.index, end: match.index + match[0].length, text: match[1], type: 'highlight' });
-    }
-
-    const allMatches = [...boldMatches, ...highlightMatches].sort((a, b) => a.start - b.start);
-
-    allMatches.forEach((match) => {
-      if (match.start > lastIndex) {
-        parts.push({ type: 'text', content: text.slice(lastIndex, match.start) });
-      }
-      parts.push({ type: match.type, content: match.text });
-      lastIndex = match.end;
-    });
-
-    if (lastIndex < text.length) {
-      parts.push({ type: 'text', content: text.slice(lastIndex) });
-    }
-
-    if (parts.length === 0) {
-      parts.push({ type: 'text', content: text });
-    }
-
-    return parts;
-  };
-
-  const renderStyledText = (text, themeClass) => {
-    const parts = parseInlineMarkdown(text);
-    return parts.map((part, i) => {
-      if (part.type === 'bold') {
-        return <strong key={i} className="font-black">{part.content}</strong>;
-      } else if (part.type === 'highlight') {
-        const color = themeClass === 'tech-dark' ? 'text-cyan-400' : themeClass === 'biz-clean' ? 'text-blue-600' : 'text-amber-600';
-        return <span key={i} className={color + ' font-bold'}>{part.content}</span>;
-      }
-      return <span key={i}>{part.content}</span>;
-    });
-  };
-
-  const parseSlide = (content) => {
-    const lines = content.split('\n').filter(l => l.trim().length > 0);
-    let slideBackground = null;
-
-    const elements = lines.map(line => {
-      line = line.trim();
-      // Parse [bg: url] syntax for per-slide backgrounds
-      if (line.match(/^\[bg:\s*.+\]$/)) {
-        const match = line.match(/^\[bg:\s*(.+)\]$/);
-        if (match) slideBackground = match[1].trim();
-        return null;
-      }
-      if (line.startsWith('# ')) return { type: 'h1', content: line.slice(2) };
-      else if (line.startsWith('## ')) return { type: 'h2', content: line.slice(3) };
-      else if (line.includes('::')) {
-        const [key, value] = line.split('::').map(s => s.trim());
-        return { type: 'spec', key, value };
-      }
-      else if (line.startsWith('> ')) return { type: 'quote', content: line.slice(2) };
-      else return { type: 'text', content: line };
-    }).filter(el => el !== null);
-
-    return { elements, background: slideBackground };
-  };
-
+  // Render slide using theme components
   const renderSlide = (slideContent, index, themeClass) => {
     const { elements, background } = parseSlide(slideContent);
-    const h1 = elements.find(el => el.type === 'h1');
-    const h2 = elements.find(el => el.type === 'h2');
-    const specs = elements.filter(el => el.type === 'spec');
-    const quotes = elements.filter(el => el.type === 'quote');
-    const texts = elements.filter(el => el.type === 'text');
 
     // Determine which background to use
     const bgImage = background || (useBackgroundImage ? backgroundImage : null);
 
-    // 🌑 TECH DARK
-    if (themeClass === 'tech-dark') {
-      return (
-        <div className="w-full h-full bg-black flex items-center justify-center relative overflow-hidden">
-          {/* Background Image with Overlay */}
-          {bgImage && (
-            <>
-              <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${bgImage})` }} />
-              <div className="absolute inset-0 bg-black/50" />
-            </>
-          )}
-          {!bgImage && <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-black to-slate-900" />}
+    // Common props for all theme components
+    const themeProps = {
+      elements,
+      bgImage,
+      instagramId,
+    };
 
-          <div className="relative z-10 w-full h-full p-10 flex flex-col justify-center">
-            {h1 && (
-              <h1 className="text-5xl font-black text-white mb-6 leading-tight line-clamp-2" style={{ letterSpacing: '-0.02em' }}>
-                {renderStyledText(h1.content, themeClass)}
-              </h1>
-            )}
-
-            {h2 && (
-              <div className="mb-6">
-                <div className="inline-block bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-2.5 backdrop-blur-xl bg-opacity-90">
-                  <h2 className="text-2xl font-bold text-white line-clamp-1" style={{ letterSpacing: '-0.02em' }}>
-                    {renderStyledText(h2.content, themeClass)}
-                  </h2>
-                </div>
-              </div>
-            )}
-
-            {quotes.length > 0 && (
-              <div className="mb-6 space-y-2">
-                {quotes.slice(0, 2).map((q, i) => (
-                  <div key={i} className="text-3xl font-black text-cyan-400 line-clamp-1" style={{ letterSpacing: '-0.02em' }}>
-                    {renderStyledText(q.content, themeClass)}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {texts.length > 0 && (
-              <div className="mb-6 space-y-2">
-                {texts.slice(0, 3).map((t, i) => (
-                  <p key={i} className="text-lg text-gray-300 line-clamp-1">
-                    {renderStyledText(t.content, themeClass)}
-                  </p>
-                ))}
-              </div>
-            )}
-
-            {specs.length > 0 && (
-              <div className="grid grid-cols-2 gap-2.5">
-                {specs.slice(0, 4).map((spec, i) => (
-                  <div key={i} className="bg-white/5 border border-white/10 p-3 backdrop-blur-xl rounded-lg">
-                    <div className="text-[10px] text-gray-400 uppercase tracking-wider mb-1 truncate">{spec.key}</div>
-                    <div className="text-sm font-bold text-white truncate">{spec.value}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Instagram ID Branding */}
-          {instagramId && (
-            <div className="absolute bottom-3 right-3 text-xs text-white/40 font-semibold">
-              {instagramId}
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    // 💼 BIZ CLEAN
-    else if (themeClass === 'biz-clean') {
-      return (
-        <div className="w-full h-full bg-slate-50 flex items-center justify-center p-6 relative overflow-hidden">
-          {/* Background Image with Overlay */}
-          {bgImage && (
-            <>
-              <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${bgImage})` }} />
-              <div className="absolute inset-0 bg-black/45" />
-            </>
-          )}
-          <div className={`${bgImage ? 'bg-white/95 backdrop-blur-sm' : 'bg-white'} w-full h-full shadow-2xl p-8 relative overflow-hidden rounded-lg z-10`}>
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600" />
-
-            <div className="h-full flex flex-col justify-center pl-4">
-              {h1 && (
-                <h1 className="text-4xl font-black text-slate-900 mb-5 leading-tight line-clamp-2" style={{ letterSpacing: '-0.02em' }}>
-                  {renderStyledText(h1.content, themeClass)}
-                </h1>
-              )}
-
-              {h2 && (
-                <div className="mb-5">
-                  <div className="bg-blue-600 text-white px-5 py-2.5 inline-block rounded shadow-lg">
-                    <h2 className="text-2xl font-bold line-clamp-1" style={{ letterSpacing: '-0.02em' }}>
-                      {renderStyledText(h2.content, themeClass)}
-                    </h2>
-                  </div>
-                </div>
-              )}
-
-              {quotes.length > 0 && (
-                <div className="mb-5 space-y-2">
-                  {quotes.slice(0, 2).map((q, i) => (
-                    <div key={i} className="text-2xl font-bold text-blue-600 border-l-4 border-blue-600 pl-3 line-clamp-2">
-                      {renderStyledText(q.content, themeClass)}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {texts.length > 0 && (
-                <div className="mb-5 space-y-2">
-                  {texts.slice(0, 3).map((t, i) => (
-                    <p key={i} className="text-base text-slate-700 flex items-start line-clamp-1">
-                      <span className="text-blue-600 mr-2 flex-shrink-0">✓</span>
-                      <span>{renderStyledText(t.content, themeClass)}</span>
-                    </p>
-                  ))}
-                </div>
-              )}
-
-              {specs.length > 0 && (
-                <div className="space-y-2">
-                  {specs.slice(0, 4).map((spec, i) => (
-                    <div key={i} className="flex items-center text-sm border-b border-gray-100 pb-2">
-                      <span className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mr-2">
-                        <span className="text-blue-600 text-xs">✓</span>
-                      </span>
-                      <span className="font-semibold text-slate-700 min-w-[80px] truncate">{spec.key}</span>
-                      <span className="text-slate-900 ml-2 truncate">{spec.value}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Instagram ID Branding */}
-            {instagramId && (
-              <div className="absolute bottom-3 right-3 text-xs text-slate-400 font-semibold">
-                {instagramId}
-              </div>
-            )}
-          </div>
-        </div>
-      );
-    }
-
-    // 📖 EMOTIONAL ESSAY
-    else if (themeClass === 'emotional-essay') {
-      return (
-        <div className="w-full h-full bg-[#fffef8] flex items-center justify-center p-12 relative overflow-hidden">
-          {/* Background Image with Overlay */}
-          {bgImage && (
-            <>
-              <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${bgImage})` }} />
-              <div className="absolute inset-0 bg-black/40" />
-            </>
-          )}
-          <div className="text-center h-full flex flex-col justify-center max-w-md relative z-10">
-            {h1 && (
-              <h1 className={`text-5xl font-serif ${bgImage ? 'text-white' : 'text-[#2c2416]'} mb-6 leading-tight line-clamp-2`} style={{ fontFamily: 'Georgia, serif', letterSpacing: '-0.01em' }}>
-                {renderStyledText(h1.content, themeClass)}
-              </h1>
-            )}
-
-            {h2 && (
-              <div className="mb-6">
-                <div className={`border-t-2 border-b-2 ${bgImage ? 'border-white' : 'border-[#8B7355]'} py-2.5 px-5 inline-block`}>
-                  <h2 className={`text-xl font-serif ${bgImage ? 'text-white' : 'text-[#5a4a3a]'} line-clamp-1`} style={{ fontFamily: 'Georgia, serif' }}>
-                    {renderStyledText(h2.content, themeClass)}
-                  </h2>
-                </div>
-              </div>
-            )}
-
-            {quotes.length > 0 && (
-              <div className="mb-6 space-y-4">
-                {quotes.slice(0, 2).map((q, i) => (
-                  <blockquote key={i} className="relative">
-                    <div className={`absolute -top-3 left-1/2 transform -translate-x-1/2 text-4xl ${bgImage ? 'text-white/30' : 'text-[#8B7355]/20'}`}>"</div>
-                    <div className={`text-3xl font-serif italic ${bgImage ? 'text-white' : 'text-[#5a4a3a]'} px-2 line-clamp-2`} style={{ fontFamily: 'Georgia, serif' }}>
-                      {renderStyledText(q.content, themeClass)}
-                    </div>
-                  </blockquote>
-                ))}
-              </div>
-            )}
-
-            {texts.length > 0 && (
-              <div className="mb-6 space-y-3">
-                {texts.slice(0, 3).map((t, i) => (
-                  <p key={i} className={`text-lg font-serif ${bgImage ? 'text-white' : 'text-[#2c2416]'} leading-relaxed line-clamp-2`} style={{ fontFamily: 'Georgia, serif' }}>
-                    {renderStyledText(t.content, themeClass)}
-                  </p>
-                ))}
-              </div>
-            )}
-
-            {specs.length > 0 && (
-              <div className="space-y-2">
-                {specs.slice(0, 3).map((spec, i) => (
-                  <div key={i} className="text-center text-base">
-                    <span className={`font-serif ${bgImage ? 'text-white/80' : 'text-[#6B5D4F]'}`} style={{ fontFamily: 'Georgia, serif' }}>{spec.key}</span>
-                    <span className={`mx-2 ${bgImage ? 'text-white/60' : 'text-[#8B7355]'}`}>·</span>
-                    <span className={`font-serif ${bgImage ? 'text-white' : 'text-[#2c2416]'}`} style={{ fontFamily: 'Georgia, serif' }}>{spec.value}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <div className="flex items-center justify-center gap-2 mt-8">
-              <div className={`w-1 h-1 rounded-full ${bgImage ? 'bg-white/60' : 'bg-[#8B7355]'}`} />
-              <div className={`w-8 h-px ${bgImage ? 'bg-white/40' : 'bg-[#8B7355]/40'}`} />
-              <div className={`w-1 h-1 rounded-full ${bgImage ? 'bg-white/60' : 'bg-[#8B7355]'}`} />
-            </div>
-
-            {/* Instagram ID Branding */}
-            {instagramId && (
-              <div className={`absolute bottom-3 right-3 text-xs ${bgImage ? 'text-white/50' : 'text-[#8B7355]/60'} font-semibold`}>
-                {instagramId}
-              </div>
-            )}
-          </div>
-        </div>
-      );
+    // Render based on theme
+    switch (themeClass) {
+      case 'tech-dark':
+        return <TechDarkTheme {...themeProps} />;
+      case 'biz-clean':
+        return <BizCleanTheme {...themeProps} />;
+      case 'emotional-essay':
+        return <EmotionalEssayTheme {...themeProps} />;
+      default:
+        return <TechDarkTheme {...themeProps} />;
     }
   };
 
@@ -479,7 +192,7 @@ function App() {
           const dataUrl = await toPng(slideRefs.current[i], {
             quality: 1,
             pixelRatio: 2, // Reduced from 3 to 2 for faster processing (still high quality: 800x800 or 800x1000)
-            backgroundColor: themeClass === 'tech-dark' ? '#000' : themeClass === 'biz-clean' ? '#f8fafc' : '#fffef8',
+            backgroundColor: getThemeBackgroundColor(themeClass),
           });
           const res = await fetch(dataUrl);
           const blob = await res.blob();

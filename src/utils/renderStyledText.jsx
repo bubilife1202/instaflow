@@ -54,7 +54,15 @@ export const renderStyledText = (text, themeClass) => {
     if (part.type === 'bold') {
       return <strong key={i} className="font-black">{part.content}</strong>;
     } else if (part.type === 'highlight') {
-      const color = themeClass === 'tech-dark' ? 'text-cyan-400' : themeClass === 'biz-clean' ? 'text-blue-600' : 'text-amber-600';
+      let color = 'text-amber-600';
+      if (themeClass === 'tech-dark') color = 'text-cyan-400';
+      else if (themeClass === 'biz-clean') color = 'text-blue-600';
+      else if (themeClass === 'minimalist-card') color = 'text-indigo-600';
+      else if (themeClass === 'bold-magazine') color = 'text-red-600';
+      else if (themeClass === 'instagram-story') color = 'text-pink-400';
+      else if (themeClass === 'modern-gradient') color = 'text-indigo-600';
+      else if (themeClass === 'emotional-film') color = 'text-stone-400';
+
       return <span key={i} className={color + ' font-bold'}>{part.content}</span>;
     }
     return <span key={i}>{part.content}</span>;

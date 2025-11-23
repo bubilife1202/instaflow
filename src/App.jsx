@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { toPng } from 'html-to-image';
 import JSZip from 'jszip';
-import { Type, Heading1, Heading2, Bold, Sparkles, Minus, BookOpen, Image as ImageIcon, Instagram, RotateCcw, Copy, Wand2, FileText, Palette } from 'lucide-react';
+import { Type, Heading1, Heading2, Bold, Sparkles, Minus, BookOpen, Image as ImageIcon, Instagram, RotateCcw, Copy, Wand2, FileText, Palette, Share2, Twitter, Facebook } from 'lucide-react';
 
 // Import utilities and configuration
 import { parseSlide } from './utils/parseSlide';
@@ -19,6 +19,8 @@ import { EmotionalEssayTheme } from './components/themes/EmotionalEssayTheme';
 import { MinimalistCardTheme } from './components/themes/MinimalistCardTheme';
 import { BoldMagazineTheme } from './components/themes/BoldMagazineTheme';
 import { InstagramStoryTheme } from './components/themes/InstagramStoryTheme';
+import { ModernGradientTheme } from './components/themes/ModernGradientTheme';
+import { EmotionalFilmTheme } from './components/themes/EmotionalFilmTheme';
 
 const THEMES = THEME_DISPLAY_NAMES;
 
@@ -56,6 +58,7 @@ function App() {
   const [selectedDesign, setSelectedDesign] = useState(() => {
     return localStorage.getItem(STORAGE_KEYS.DESIGN_TEMPLATE) || null;
   });
+  const [showShareMenu, setShowShareMenu] = useState(false);
   const slideRefs = useRef([]);
   const textareaRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -202,6 +205,30 @@ function App() {
     });
   };
 
+  // Social Share Functions
+  const shareUrl = typeof window !== 'undefined' ? window.location.href : 'https://instaflow.netlify.app';
+  const shareText = 'InstaFlow - 인스타그램 카드뉴스, 3초 만에 만들기';
+
+  const handleShare = (platform) => {
+    let url = '';
+    switch (platform) {
+      case 'twitter':
+        url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
+        break;
+      case 'facebook':
+        url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+        break;
+      case 'copy':
+        navigator.clipboard.writeText(shareUrl).then(() => {
+          alert('링크가 복사되었습니다! 친구들에게 공유해주세요.');
+        });
+        setShowShareMenu(false);
+        return;
+    }
+    if (url) window.open(url, '_blank');
+    setShowShareMenu(false);
+  };
+
   // Render slide using theme components with optional design template
   const renderSlide = (slideContent, index, themeClass) => {
     const { elements, background } = parseSlide(slideContent);
@@ -252,6 +279,12 @@ function App() {
         break;
       case 'instagram-story':
         themeComponent = <InstagramStoryTheme {...themeProps} />;
+        break;
+      case 'modern-gradient':
+        themeComponent = <ModernGradientTheme {...themeProps} />;
+        break;
+      case 'emotional-film':
+        themeComponent = <EmotionalFilmTheme {...themeProps} />;
         break;
       default:
         themeComponent = <TechDarkTheme {...themeProps} />;
@@ -340,6 +373,34 @@ function App() {
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
+              {/* Share Menu (New Viral Feature) */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowShareMenu(!showShareMenu)}
+                  className="px-3 py-2 bg-slate-700 text-white rounded-lg font-semibold hover:bg-slate-600 text-sm flex items-center gap-2 border border-slate-600"
+                >
+                  <Share2 className="w-4 h-4" />
+                  공유
+                </button>
+
+                {showShareMenu && (
+                  <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-2xl border border-gray-100 z-50 overflow-hidden animate-fade-in">
+                    <div className="p-2 space-y-1">
+                      <button onClick={() => handleShare('twitter')} className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition">
+                        <Twitter className="w-4 h-4 text-sky-500" /> 트위터 공유
+                      </button>
+                      <button onClick={() => handleShare('facebook')} className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition">
+                        <Facebook className="w-4 h-4 text-blue-600" /> 페이스북 공유
+                      </button>
+                      <div className="h-px bg-gray-100 my-1" />
+                      <button onClick={() => handleShare('copy')} className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition">
+                        <Copy className="w-4 h-4 text-gray-500" /> 링크 복사
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <button onClick={() => setShowGuide(true)} className="px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 text-sm flex items-center gap-2">
                 <BookOpen className="w-4 h-4" />
                 가이드

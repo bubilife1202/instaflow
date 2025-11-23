@@ -59,6 +59,8 @@ function App() {
     return localStorage.getItem(STORAGE_KEYS.DESIGN_TEMPLATE) || null;
   });
   const [showShareMenu, setShowShareMenu] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(null); // { current: 0, total: 0 }
+  const [showDownloadComplete, setShowDownloadComplete] = useState(false);
   const slideRefs = useRef([]);
   const textareaRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -304,56 +306,76 @@ function App() {
 
   const downloadAll = async () => {
     setIsDownloading(true);
+    setDownloadProgress({ current: 0, total: slides.length });
+
     try {
-      // Wait for fonts to load - ensures text renders correctly
+      // Wait for fonts to load
       await document.fonts.ready;
-      // Minimal delay for DOM to settle
       await new Promise(r => setTimeout(r, 100));
     } catch (e) {}
 
     const zip = new JSZip();
+    const results = [];
 
     try {
-      // Parallel processing: capture all slides simultaneously using Promise.all
-      const capturePromises = slides.map(async (slide, i) => {
-        if (!slideRefs.current[i]) return null;
+      // Sequential processing to prevent UI freeze
+      for (let i = 0; i < slides.length; i++) {
+        if (!slideRefs.current[i]) continue;
+
+        // Update progress to show we are working on this slide
+        setDownloadProgress({ current: i + 1, total: slides.length });
+
+        // Yield to main thread to let UI update
+        await new Promise(r => setTimeout(r, 50));
 
         try {
           const dataUrl = await toPng(slideRefs.current[i], {
             quality: 1,
-            pixelRatio: 2, // High quality at 2x (800x800 or 800x1000)
+            pixelRatio: 2,
             backgroundColor: getThemeBackgroundColor(themeClass),
           });
           const res = await fetch(dataUrl);
           const blob = await res.blob();
-          return { index: i, blob };
+          results.push({ index: i, blob });
         } catch (err) {
           console.error(`Error capturing slide ${i + 1}:`, err);
-          return null;
         }
-      });
+      }
 
-      // Wait for all captures to complete in parallel
-      const results = await Promise.all(capturePromises);
-
-      // Add captured slides to zip in order
+      // Add captured slides to zip
       results.forEach(result => {
         if (result && result.blob) {
           zip.file(`slide-${String(result.index + 1).padStart(2, '0')}.png`, result.blob);
         }
       });
 
+      // Generate filename from first H1 or default
+      let filename = 'instaflow.zip';
+      const firstSlide = parseSlide(slides[0]);
+      const title = firstSlide.elements.find(el => el.type === 'h1');
+      if (title) {
+        // Clean up title to be filename safe
+        const safeTitle = title.content.replace(/[^a-zA-Z0-9가-힣]/g, '_').substring(0, 30);
+        if (safeTitle) filename = `${safeTitle}_InstaFlow.zip`;
+      }
+
       // Generate and download zip file
       const content = await zip.generateAsync({ type: 'blob' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(content);
-      link.download = 'instaflow.zip';
+      link.download = filename;
       link.click();
+
+      // Show success modal
+      setShowDownloadComplete(true);
+
     } catch (err) {
       console.error('Download error:', err);
+      alert('다운로드 중 오류가 발생했습니다.');
     }
 
     setIsDownloading(false);
+    setDownloadProgress(null);
   };
 
   const themeClass = THEMES[theme];
@@ -458,7 +480,7 @@ function App() {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
-                    생성 중...
+                    {downloadProgress ? `${downloadProgress.current}/${downloadProgress.total}` : '생성 중...'}
                   </span>
                 ) : '다운로드'}
               </button>
@@ -856,6 +878,44 @@ function App() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* Download Complete Modal */}
+      {showDownloadComplete && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowDownloadComplete(false)}>
+          <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl text-center" onClick={e => e.stopPropagation()}>
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Sparkles className="w-8 h-8 text-green-600" />
+            </div>
+            <h2 className="text-2xl font-black mb-2">다운로드 완료!</h2>
+            <p className="text-gray-600 mb-6">
+              멋진 카드뉴스가 완성되었습니다.<br />
+              인스타그램에 올릴 때 아래 해시태그를 사용해보세요!
+            </p>
+
+            <div className="bg-gray-100 p-4 rounded-lg mb-6 text-sm font-mono text-gray-600 break-all">
+              #InstaFlow #카드뉴스 #마케팅 #카드뉴스만들기
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText('#InstaFlow #카드뉴스 #마케팅 #카드뉴스만들기');
+                  alert('해시태그가 복사되었습니다!');
+                }}
+                className="flex-1 px-4 py-3 bg-gray-200 text-gray-800 rounded-lg font-bold hover:bg-gray-300 transition"
+              >
+                태그 복사
+              </button>
+              <button
+                onClick={() => setShowDownloadComplete(false)}
+                className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition"
+              >
+                확인
+              </button>
+            </div>
           </div>
         </div>
       )}

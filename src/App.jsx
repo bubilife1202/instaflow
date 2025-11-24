@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { toPng } from 'html-to-image';
 import JSZip from 'jszip';
-import { Type, Heading1, Heading2, Bold, Sparkles, Minus, BookOpen, Image as ImageIcon, Instagram, RotateCcw, Copy, Wand2, FileText, Palette, Share2, Twitter, Facebook } from 'lucide-react';
+import { Type, Heading1, Heading2, Bold, Sparkles, Minus, BookOpen, Image as ImageIcon, Instagram, RotateCcw, Copy, Wand2, FileText, Palette, Share2, Twitter, Facebook, Menu, X } from 'lucide-react';
 
 // Import utilities and configuration
 import { parseSlide } from './utils/parseSlide';
@@ -61,6 +61,8 @@ function App() {
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(null); // { current: 0, total: 0 }
   const [showDownloadComplete, setShowDownloadComplete] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('editor'); // 'editor' | 'preview'
   const slideRefs = useRef([]);
   const textareaRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -308,6 +310,16 @@ function App() {
     setIsDownloading(true);
     setDownloadProgress({ current: 0, total: slides.length });
 
+    // Store current tab to restore later if needed
+    const previousTab = activeTab;
+
+    // If on mobile and in editor tab, switch to preview temporarily for capture
+    if (window.innerWidth < 1024 && activeTab !== 'preview') {
+      setActiveTab('preview');
+      // Wait for render/layout
+      await new Promise(r => setTimeout(r, 200));
+    }
+
     try {
       // Wait for fonts to load
       await document.fonts.ready;
@@ -329,9 +341,15 @@ function App() {
         await new Promise(r => setTimeout(r, 50));
 
         try {
-          const dataUrl = await toPng(slideRefs.current[i], {
+          // Calculate pixel ratio to ensure consistent high resolution output (target 1080px width)
+          const node = slideRefs.current[i];
+          const currentWidth = node.offsetWidth;
+          const targetWidth = 1080;
+          const pixelRatio = targetWidth / currentWidth;
+
+          const dataUrl = await toPng(node, {
             quality: 1,
-            pixelRatio: 2,
+            pixelRatio: pixelRatio, // Dynamic ratio for high res
             backgroundColor: getThemeBackgroundColor(themeClass),
           });
           const res = await fetch(dataUrl);
@@ -376,6 +394,11 @@ function App() {
 
     setIsDownloading(false);
     setDownloadProgress(null);
+
+    // Restore tab if we switched it
+    if (previousTab !== activeTab) {
+      setActiveTab(previousTab);
+    }
   };
 
   const themeClass = THEMES[theme];
@@ -383,18 +406,27 @@ function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Premium Header */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 shadow-xl border-b border-slate-700">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 shadow-xl border-b border-slate-700 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-3 md:py-4">
+          <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-lg flex items-center justify-center">
-                <Type className="w-6 h-6 text-white" />
+              <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-lg flex items-center justify-center">
+                <Type className="w-5 h-5 md:w-6 md:h-6 text-white" />
               </div>
-              <h1 className="text-2xl font-black text-white tracking-tight">InstaFlow</h1>
-              <span className="px-2 py-1 bg-cyan-500/20 text-cyan-400 text-xs font-bold rounded border border-cyan-500/30">PRO</span>
+              <h1 className="text-xl md:text-2xl font-black text-white tracking-tight">InstaFlow</h1>
+              <span className="px-2 py-0.5 md:py-1 bg-cyan-500/20 text-cyan-400 text-[10px] md:text-xs font-bold rounded border border-cyan-500/30">PRO</span>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
+            {/* Mobile Menu Toggle */}
+            <button
+              className="lg:hidden p-2 text-white hover:bg-slate-700 rounded-lg transition"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+
+            {/* Desktop Controls */}
+            <div className="hidden lg:flex flex-wrap items-center gap-3">
               {/* Share Menu (New Viral Feature) */}
               <div className="relative">
                 <button
@@ -486,14 +518,102 @@ function App() {
               </button>
             </div>
           </div>
+
+          {/* Mobile Menu Content */}
+          {isMobileMenuOpen && (
+            <div className="lg:hidden mt-4 pt-4 border-t border-slate-700 space-y-4 animate-fade-in">
+              <div className="grid grid-cols-2 gap-3">
+                <button onClick={() => setShowGuide(true)} className="px-4 py-3 bg-slate-700 text-white rounded-lg font-semibold hover:bg-slate-600 text-sm flex items-center justify-center gap-2">
+                  <BookOpen className="w-4 h-4" />
+                  가이드
+                </button>
+                <button onClick={() => setShowAIPrompt(true)} className="px-4 py-3 bg-slate-700 text-white rounded-lg font-semibold hover:bg-slate-600 text-sm flex items-center justify-center gap-2">
+                  <Wand2 className="w-4 h-4" />
+                  AI 도우미
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-400 block">템플릿</label>
+                <select onChange={(e) => loadTemplate(e.target.value)} className="w-full px-3 py-3 bg-slate-700 text-white border border-slate-600 rounded-lg text-sm">
+                  <option value="">템플릿 선택...</option>
+                  {getTemplateList().map(({ key, name }) => <option key={key} value={key}>{name}</option>)}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-400 block">테마</label>
+                <select value={theme} onChange={(e) => setTheme(e.target.value)} className="w-full px-3 py-3 bg-slate-700 text-white border border-slate-600 rounded-lg text-sm">
+                  {Object.keys(THEMES).map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-400 block">비율</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button onClick={() => setAspectRatio('1:1')} className={`px-3 py-3 rounded-lg text-sm font-semibold transition ${aspectRatio === '1:1' ? 'bg-cyan-500 text-white' : 'bg-slate-700 text-gray-300'}`}>1:1 (피드)</button>
+                  <button onClick={() => setAspectRatio('4:5')} className={`px-3 py-3 rounded-lg text-sm font-semibold transition ${aspectRatio === '4:5' ? 'bg-cyan-500 text-white' : 'bg-slate-700 text-gray-300'}`}>4:5 (스토리)</button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-400 block">배경 이미지</label>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex-1 px-3 py-3 bg-slate-700 text-white rounded-lg text-sm hover:bg-slate-600 transition flex items-center justify-center gap-2"
+                  >
+                    <ImageIcon className="w-4 h-4" />
+                    {backgroundImage ? '이미지 변경' : '이미지 업로드'}
+                  </button>
+                  {backgroundImage && (
+                    <button
+                      onClick={() => setUseBackgroundImage(!useBackgroundImage)}
+                      className={`flex-1 px-3 py-3 rounded-lg text-sm font-semibold transition ${useBackgroundImage ? 'bg-cyan-500 text-white' : 'bg-slate-700 text-gray-300'}`}
+                    >
+                      {useBackgroundImage ? '배경 사용 ON' : '배경 사용 OFF'}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <button onClick={downloadAll} disabled={isDownloading} className={`w-full py-4 rounded-xl font-bold text-base transition shadow-lg ${isDownloading ? 'bg-gray-400' : 'bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700'}`}>
+                {isDownloading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    {downloadProgress ? `${downloadProgress.current}/${downloadProgress.total}` : '생성 중...'}
+                  </span>
+                ) : '전체 다운로드'}
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 py-6">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-6">
+        {/* Mobile Tabs */}
+        <div className="flex lg:hidden bg-white rounded-xl shadow-md p-1 mb-4">
+          <button
+            onClick={() => setActiveTab('editor')}
+            className={`flex-1 py-2 rounded-lg text-sm font-bold transition ${activeTab === 'editor' ? 'bg-slate-800 text-white shadow' : 'text-gray-500 hover:bg-gray-50'}`}
+          >
+            에디터
+          </button>
+          <button
+            onClick={() => setActiveTab('preview')}
+            className={`flex-1 py-2 rounded-lg text-sm font-bold transition ${activeTab === 'preview' ? 'bg-slate-800 text-white shadow' : 'text-gray-500 hover:bg-gray-50'}`}
+          >
+            미리보기 ({slides.length})
+          </button>
+        </div>
+
         <div className="grid lg:grid-cols-2 gap-6">
           {/* Editor Panel */}
-          <div className="bg-white rounded-xl shadow-lg p-6 h-[700px] flex flex-col">
+          <div className={`${activeTab === 'editor' ? 'flex' : 'hidden'} lg:flex bg-white rounded-xl shadow-lg p-4 md:p-6 min-h-[500px] lg:h-[700px] flex-col`}>
             <div className="flex items-center justify-between mb-3">
               <label className="text-sm font-bold text-gray-700">스크립트 에디터</label>
               <input
@@ -524,30 +644,30 @@ function App() {
             </div>
 
             {/* Editor Toolbar */}
-            <div className="flex gap-2 mb-3 pb-3 border-b justify-between">
+            <div className="flex gap-2 mb-3 pb-3 border-b justify-between overflow-x-auto custom-scrollbar">
               <div className="flex gap-2">
-                <button onClick={() => insertText('# ')} className="p-2 bg-gray-100 hover:bg-gray-200 rounded transition" title="H1">
-                  <Heading1 className="w-4 h-4" />
+                <button onClick={() => insertText('# ')} className="p-2 md:p-2.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition shrink-0" title="H1">
+                  <Heading1 className="w-4 h-4 md:w-5 md:h-5" />
                 </button>
-                <button onClick={() => insertText('## ')} className="p-2 bg-gray-100 hover:bg-gray-200 rounded transition" title="H2">
-                  <Heading2 className="w-4 h-4" />
+                <button onClick={() => insertText('## ')} className="p-2 md:p-2.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition shrink-0" title="H2">
+                  <Heading2 className="w-4 h-4 md:w-5 md:h-5" />
                 </button>
-                <button onClick={() => insertText('**', '**')} className="p-2 bg-gray-100 hover:bg-gray-200 rounded transition" title="Bold">
-                  <Bold className="w-4 h-4" />
+                <button onClick={() => insertText('**', '**')} className="p-2 md:p-2.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition shrink-0" title="Bold">
+                  <Bold className="w-4 h-4 md:w-5 md:h-5" />
                 </button>
-                <button onClick={() => insertText('*', '*')} className="p-2 bg-gray-100 hover:bg-gray-200 rounded transition" title="Highlight">
-                  <Sparkles className="w-4 h-4" />
+                <button onClick={() => insertText('*', '*')} className="p-2 md:p-2.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition shrink-0" title="Highlight">
+                  <Sparkles className="w-4 h-4 md:w-5 md:h-5" />
                 </button>
-                <button onClick={() => insertText('\n---\n')} className="p-2 bg-gray-100 hover:bg-gray-200 rounded transition" title="New Slide">
-                  <Minus className="w-4 h-4" />
+                <button onClick={() => insertText('\n---\n')} className="p-2 md:p-2.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition shrink-0" title="New Slide">
+                  <Minus className="w-4 h-4 md:w-5 md:h-5" />
                 </button>
               </div>
               <div className="flex gap-2">
-                <button onClick={copyCaption} className="p-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded transition" title="캡션 복사">
-                  <Copy className="w-4 h-4" />
+                <button onClick={copyCaption} className="p-2 md:p-2.5 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition shrink-0" title="캡션 복사">
+                  <Copy className="w-4 h-4 md:w-5 md:h-5" />
                 </button>
-                <button onClick={handleReset} className="p-2 bg-red-100 hover:bg-red-200 text-red-700 rounded transition" title="초기화">
-                  <RotateCcw className="w-4 h-4" />
+                <button onClick={handleReset} className="p-2 md:p-2.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition shrink-0" title="초기화">
+                  <RotateCcw className="w-4 h-4 md:w-5 md:h-5" />
                 </button>
               </div>
             </div>
@@ -556,41 +676,47 @@ function App() {
               ref={textareaRef}
               value={script}
               onChange={(e) => setScript(e.target.value)}
-              className="flex-1 p-4 border-2 border-gray-200 rounded-lg font-mono text-sm resize-none focus:border-cyan-500 focus:outline-none transition"
+              className="flex-1 p-4 border-2 border-gray-200 rounded-lg font-mono text-sm resize-none focus:border-cyan-500 focus:outline-none transition min-h-[300px]"
               placeholder="여기에 스크립트를 작성하세요..."
             />
           </div>
 
           {/* Preview Panel */}
-          <div className="bg-white rounded-xl shadow-lg p-6 h-[700px] flex flex-col">
+          <div className={`${activeTab === 'preview' ? 'flex' : 'hidden'} lg:flex bg-white rounded-xl shadow-lg p-4 md:p-6 min-h-[500px] lg:h-[700px] flex-col`}>
             <label className="text-sm font-bold text-gray-700 mb-4">미리보기 ({slides.length}개 슬라이드)</label>
-            <div className="flex-1 overflow-y-auto">
-              <div className="space-y-6">
+            <div className="flex-1 overflow-y-auto custom-scrollbar">
+              <div className="space-y-8 pb-12">
                 {slides.map((slide, i) => (
-                  <div key={i} className="flex justify-center">
-                    {/* iPhone-Style Smartphone Mockup */}
-                    <div className="relative inline-block transform transition-transform hover:scale-105" style={{ width: '420px', height: aspectRatio === '1:1' ? '420px' : '520px' }}>
+                  <div key={i} className="flex justify-center px-2">
+                    {/* Responsive Smartphone Mockup */}
+                    <div
+                      className="relative mx-auto transform transition-transform hover:scale-[1.02]"
+                      style={{
+                        width: '100%',
+                        maxWidth: '420px',
+                        aspectRatio: aspectRatio === '1:1' ? '420 / 420' : '420 / 520'
+                      }}
+                    >
                       {/* Phone Body with Gradient Bezel */}
-                      <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-[42px] shadow-2xl p-[12px] w-full h-full relative">
+                      <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-[2rem] md:rounded-[42px] shadow-2xl p-[3%] w-full h-full relative">
                         {/* Side Buttons */}
-                        <div className="absolute -left-[2px] top-20 w-[3px] h-8 bg-gray-900 rounded-l-sm" />
-                        <div className="absolute -left-[2px] top-32 w-[3px] h-12 bg-gray-900 rounded-l-sm" />
-                        <div className="absolute -right-[2px] top-24 w-[3px] h-16 bg-gray-900 rounded-r-sm" />
+                        <div className="absolute -left-[2px] top-[15%] w-[3px] h-[6%] bg-gray-900 rounded-l-sm" />
+                        <div className="absolute -left-[2px] top-[25%] w-[3px] h-[8%] bg-gray-900 rounded-l-sm" />
+                        <div className="absolute -right-[2px] top-[20%] w-[3px] h-[12%] bg-gray-900 rounded-r-sm" />
 
-                        {/* Screen Container with Inner Shadow */}
-                        <div className="relative w-full h-full bg-black rounded-[32px] overflow-hidden" style={{ boxShadow: 'inset 0 0 8px rgba(0,0,0,0.6)' }}>
+                        {/* Screen Container */}
+                        <div className="relative w-full h-full bg-black rounded-[1.5rem] md:rounded-[32px] overflow-hidden shadow-inner">
                           {/* Notch */}
-                          <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-32 h-6 bg-gray-900 rounded-b-2xl z-10 flex items-center justify-center">
-                            <div className="w-16 h-1 bg-gray-800 rounded-full mt-1" />
-                            <div className="absolute right-3 top-2 w-1.5 h-1.5 bg-gray-700 rounded-full" />
+                          <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-[30%] h-[5%] bg-gray-900 rounded-b-2xl z-10 flex items-center justify-center">
+                            <div className="w-[40%] h-[15%] bg-gray-800 rounded-full mt-1" />
                           </div>
 
-                          {/* Actual Slide Content (for screenshot) */}
-                          <div ref={el => slideRefs.current[i] = el} className="w-full h-full" style={{ width: '396px', height: aspectRatio === '1:1' ? '396px' : '496px' }}>
+                          {/* Actual Slide Content */}
+                          <div ref={el => slideRefs.current[i] = el} className="w-full h-full">
                             {renderSlide(slide, i, themeClass)}
                           </div>
 
-                          {/* Slide Indicators (overlay, not in screenshot) */}
+                          {/* Slide Indicators */}
                           <div className="absolute top-2 right-2 text-xs font-bold opacity-30 text-white mix-blend-difference pointer-events-none z-20">{i+1}/{slides.length}</div>
                           {i < slides.length - 1 && <div className="absolute bottom-2 right-2 text-lg opacity-30 pointer-events-none z-20">👉</div>}
                         </div>
@@ -645,10 +771,12 @@ function App() {
       {/* Guide Modal */}
       {showGuide && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowGuide(false)}>
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-8 shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-3xl font-black">사용 가이드</h2>
-              <button onClick={() => setShowGuide(false)} className="text-3xl text-gray-400 hover:text-gray-600">&times;</button>
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6 md:p-8 shadow-2xl custom-scrollbar" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6 sticky top-0 bg-white z-10 pb-2 border-b border-gray-100">
+              <h2 className="text-2xl md:text-3xl font-black">사용 가이드</h2>
+              <button onClick={() => setShowGuide(false)} className="p-2 -mr-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition">
+                <X className="w-6 h-6 md:w-8 md:h-8" />
+              </button>
             </div>
 
             <div className="space-y-6">
@@ -721,13 +849,15 @@ function App() {
       {/* AI Prompt Generator Modal */}
       {showAIPrompt && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowAIPrompt(false)}>
-          <div className="bg-white rounded-2xl max-w-xl w-full p-8 shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-3xl font-black flex items-center gap-2">
-                <Wand2 className="w-8 h-8 text-purple-600" />
+          <div className="bg-white rounded-2xl max-w-xl w-full max-h-[80vh] overflow-y-auto p-6 md:p-8 shadow-2xl custom-scrollbar" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6 sticky top-0 bg-white z-10 pb-2 border-b border-gray-100">
+              <h2 className="text-xl md:text-3xl font-black flex items-center gap-2">
+                <Wand2 className="w-6 h-6 md:w-8 md:h-8 text-purple-600" />
                 AI 프롬프트 생성기
               </h2>
-              <button onClick={() => setShowAIPrompt(false)} className="text-3xl text-gray-400 hover:text-gray-600">&times;</button>
+              <button onClick={() => setShowAIPrompt(false)} className="p-2 -mr-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition">
+                <X className="w-6 h-6 md:w-8 md:h-8" />
+              </button>
             </div>
 
             <div className="space-y-4">
@@ -779,13 +909,15 @@ function App() {
       {/* Content Preset Modal */}
       {showContentModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowContentModal(false)}>
-          <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[80vh] overflow-y-auto p-8 shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-3xl font-black flex items-center gap-2">
-                <FileText className="w-8 h-8 text-blue-600" />
+          <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[80vh] overflow-y-auto p-6 md:p-8 shadow-2xl custom-scrollbar" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6 sticky top-0 bg-white z-10 pb-2 border-b border-gray-100">
+              <h2 className="text-xl md:text-3xl font-black flex items-center gap-2">
+                <FileText className="w-6 h-6 md:w-8 md:h-8 text-blue-600" />
                 📝 내용 불러오기
               </h2>
-              <button onClick={() => setShowContentModal(false)} className="text-3xl text-gray-400 hover:text-gray-600">&times;</button>
+              <button onClick={() => setShowContentModal(false)} className="p-2 -mr-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition">
+                <X className="w-6 h-6 md:w-8 md:h-8" />
+              </button>
             </div>
 
             <p className="text-gray-600 mb-6">
@@ -822,13 +954,15 @@ function App() {
       {/* Design Template Modal */}
       {showDesignModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowDesignModal(false)}>
-          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[80vh] overflow-y-auto p-8 shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-3xl font-black flex items-center gap-2">
-                <Palette className="w-8 h-8 text-purple-600" />
+          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[80vh] overflow-y-auto p-6 md:p-8 shadow-2xl custom-scrollbar" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6 sticky top-0 bg-white z-10 pb-2 border-b border-gray-100">
+              <h2 className="text-xl md:text-3xl font-black flex items-center gap-2">
+                <Palette className="w-6 h-6 md:w-8 md:h-8 text-purple-600" />
                 🎨 디자인 변경
               </h2>
-              <button onClick={() => setShowDesignModal(false)} className="text-3xl text-gray-400 hover:text-gray-600">&times;</button>
+              <button onClick={() => setShowDesignModal(false)} className="p-2 -mr-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition">
+                <X className="w-6 h-6 md:w-8 md:h-8" />
+              </button>
             </div>
 
             <p className="text-gray-600 mb-6">

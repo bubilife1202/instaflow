@@ -17,6 +17,169 @@ import {
 } from '../services/geminiAI';
 
 /**
+ * MiniSlidePreview - Simplified mini preview for thumbnails
+ */
+function MiniSlidePreview({ slideData, themePack, aspectRatio }) {
+  const slideType = slideData?.type || 'cover';
+  let styles = {};
+
+  if (slideType === 'cover') {
+    styles = themePack.cover;
+  } else if (slideType === 'cta') {
+    styles = themePack.cta;
+  } else {
+    styles = themePack.body;
+  }
+
+  const accentColor = styles.accentColor || styles.titleColor;
+
+  return (
+    <div
+      className="w-full h-full flex flex-col items-center justify-center text-center relative overflow-hidden"
+      style={{
+        background: styles.background,
+        aspectRatio: aspectRatio === '1:1' ? '1/1' : '4/5'
+      }}
+    >
+      {/* Background image overlay */}
+      {slideData?.image && (
+        <>
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: `url(${slideData.image})` }}
+          />
+          <div className="absolute inset-0 bg-black/50" />
+        </>
+      )}
+
+      {/* Object image thumbnail */}
+      {slideData?.objectImage && (
+        <div
+          className="absolute w-4 h-4 rounded bg-cover bg-center z-10"
+          style={{
+            backgroundImage: `url(${slideData.objectImage})`,
+            top: '15%',
+            left: '50%',
+            transform: 'translateX(-50%)'
+          }}
+        />
+      )}
+
+      <div className="relative z-10 p-1 flex flex-col items-center justify-center">
+        {/* Cover */}
+        {slideType === 'cover' && (
+          <>
+            <div className="w-4 h-0.5 rounded-full mb-0.5" style={{ background: accentColor, opacity: 0.5 }} />
+            <div
+              className="text-[6px] font-black leading-tight text-center px-0.5 line-clamp-2"
+              style={{ color: slideData?.image ? '#fff' : styles.titleColor }}
+            >
+              {slideData?.title || '제목'}
+            </div>
+          </>
+        )}
+
+        {/* Item/Step */}
+        {(slideType === 'item' || slideType === 'step') && (
+          <>
+            {!slideData?.objectImage && (
+              <div
+                className="w-3 h-3 rounded text-[5px] font-bold flex items-center justify-center mb-0.5"
+                style={{ background: styles.numberBg, color: styles.numberColor }}
+              >
+                {slideData?.number || '1'}
+              </div>
+            )}
+            <div
+              className="text-[5px] font-bold leading-tight text-center line-clamp-2"
+              style={{ color: styles.titleColor }}
+            >
+              {slideData?.itemTitle || slideData?.stepTitle || '제목'}
+            </div>
+          </>
+        )}
+
+        {/* Question */}
+        {slideType === 'question' && (
+          <>
+            {!slideData?.objectImage && (
+              <div
+                className="w-3 h-3 rounded-full text-[6px] font-bold flex items-center justify-center mb-0.5"
+                style={{ background: `${accentColor}30`, color: accentColor }}
+              >
+                ?
+              </div>
+            )}
+            <div
+              className="text-[5px] font-bold leading-tight text-center line-clamp-2"
+              style={{ color: styles.titleColor }}
+            >
+              {slideData?.questionText || '질문'}
+            </div>
+          </>
+        )}
+
+        {/* Answer */}
+        {slideType === 'answer' && (
+          <>
+            {!slideData?.objectImage && (
+              <div className="text-[8px] mb-0.5">💡</div>
+            )}
+            <div
+              className="text-[5px] font-bold leading-tight text-center line-clamp-2"
+              style={{ color: styles.titleColor }}
+            >
+              {slideData?.answerText || '답변'}
+            </div>
+          </>
+        )}
+
+        {/* CTA */}
+        {slideType === 'cta' && (
+          <>
+            <div
+              className="text-[5px] font-bold leading-tight text-center mb-0.5 line-clamp-1"
+              style={{ color: styles.titleColor }}
+            >
+              {slideData?.ctaText || 'CTA'}
+            </div>
+            <div
+              className="text-[4px] px-1 py-0.5 rounded-full font-bold"
+              style={{ background: styles.buttonBg, color: styles.buttonColor }}
+            >
+              {slideData?.ctaAction || '버튼'}
+            </div>
+          </>
+        )}
+
+        {/* Quote */}
+        {slideType === 'quote' && (
+          <>
+            <div className="text-[8px] leading-none" style={{ color: accentColor, opacity: 0.5 }}>"</div>
+            <div
+              className="text-[5px] italic leading-tight text-center line-clamp-2"
+              style={{ color: styles.titleColor }}
+            >
+              {slideData?.quoteText || '명언'}
+            </div>
+          </>
+        )}
+
+        {/* Fallback */}
+        {!['cover', 'item', 'step', 'question', 'answer', 'cta', 'quote'].includes(slideType) && (
+          <div
+            className="text-[5px] font-bold text-center line-clamp-2"
+            style={{ color: styles.titleColor }}
+          >
+            {slideType}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
  * ThemePreviewCard - Shows actual mini card news preview for theme selection
  */
 function ThemePreviewCard({ themePack, isSelected, onClick }) {
@@ -1637,24 +1800,31 @@ export default function BatchFlowMaker({ onBack }) {
                 </div>
 
                 {/* Mini Thumbnails */}
-                <div className="flex gap-1 mt-3 overflow-x-auto pb-1">
-                  {Object.entries(contentData).map(([idx, data]) => (
-                    <button
-                      key={idx}
-                      onClick={() => setPreviewIndex(parseInt(idx))}
-                      className={`flex-shrink-0 rounded overflow-hidden border-2 transition ${
-                        previewIndex === parseInt(idx) ? 'border-purple-500' : 'border-transparent hover:border-white/30'
-                      }`}
-                      style={{
-                        width: '48px',
-                        aspectRatio: aspectRatio === '1:1' ? '1/1' : '4/5'
-                      }}
-                    >
-                      <div className="w-full h-full scale-[0.15] origin-top-left" style={{ width: '320px', height: aspectRatio === '1:1' ? '320px' : '400px' }}>
-                        {renderSlidePreview(data, parseInt(idx))}
-                      </div>
-                    </button>
-                  ))}
+                <div className="flex gap-1.5 mt-3 overflow-x-auto pb-1 px-1">
+                  {Object.entries(contentData).map(([idx, data]) => {
+                    const themePack = THEME_PACKS[selectedThemePack] || THEME_PACKS['modernMinimal'];
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => setPreviewIndex(parseInt(idx))}
+                        className={`flex-shrink-0 rounded-lg overflow-hidden transition-all ${
+                          previewIndex === parseInt(idx)
+                            ? 'ring-2 ring-purple-500 ring-offset-1 ring-offset-black scale-105'
+                            : 'opacity-60 hover:opacity-100 hover:scale-102'
+                        }`}
+                        style={{
+                          width: '44px',
+                          aspectRatio: aspectRatio === '1:1' ? '1/1' : '4/5'
+                        }}
+                      >
+                        <MiniSlidePreview
+                          slideData={data}
+                          themePack={themePack}
+                          aspectRatio={aspectRatio}
+                        />
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>

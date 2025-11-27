@@ -3,7 +3,8 @@ import { toPng } from 'html-to-image';
 import JSZip from 'jszip';
 import {
   ChevronRight, ChevronLeft, Sparkles, Download, Wand2, RotateCcw,
-  Settings, Eye, Edit3, Palette, Check, X, Zap, Copy, ChevronDown, ChevronUp
+  Settings, Eye, Edit3, Palette, Check, X, Zap, Copy, ChevronDown, ChevronUp,
+  ImagePlus, Trash2
 } from 'lucide-react';
 
 // Import data
@@ -61,6 +62,9 @@ export default function BatchFlowMaker({ onBack }) {
 
   // Refs for download
   const slideRefs = useRef([]);
+
+  // Refs for image upload
+  const imageInputRefs = useRef({});
 
   // Save instagram ID
   useEffect(() => {
@@ -146,6 +150,30 @@ export default function BatchFlowMaker({ onBack }) {
         [field]: value
       }
     }));
+  };
+
+  // Handle image upload for a slide
+  const handleImageUpload = (slideIndex, event) => {
+    const file = event.target.files[0];
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        updateContent(slideIndex, 'image', e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Remove image from a slide
+  const removeImage = (slideIndex) => {
+    setContentData(prev => {
+      const newData = { ...prev };
+      if (newData[slideIndex]) {
+        const { image, ...rest } = newData[slideIndex];
+        newData[slideIndex] = rest;
+      }
+      return newData;
+    });
   };
 
   // Generate AI content
@@ -297,32 +325,47 @@ export default function BatchFlowMaker({ onBack }) {
 
     const accentColor = styles.accentColor || styles.titleColor;
 
+    // Image size classes
+    const imageSize = isDownload ? 'w-48 h-48' : 'w-24 h-24';
+    const smallImageSize = isDownload ? 'w-32 h-32' : 'w-16 h-16';
+
     return (
       <div
         ref={forDownload ? (el => slideRefs.current[index] = el) : null}
         className="w-full h-full flex flex-col items-center justify-center text-center relative overflow-hidden"
         style={containerStyle}
       >
+        {/* Background image overlay if exists */}
+        {slideData.image && (
+          <>
+            <div
+              className="absolute inset-0 bg-cover bg-center"
+              style={{ backgroundImage: `url(${slideData.image})` }}
+            />
+            <div className="absolute inset-0 bg-black/50" />
+          </>
+        )}
+
         {/* Cover Slide - Professional Design */}
         {slideType === 'cover' && (
           <>
-            <DecoCircles color={accentColor} opacity={0.1} />
-            <DecoCorners color={accentColor} opacity={0.25} />
-            <DecoLines color={accentColor} opacity={0.2} />
+            {!slideData.image && <DecoCircles color={accentColor} opacity={0.1} />}
+            {!slideData.image && <DecoCorners color={accentColor} opacity={0.25} />}
+            {!slideData.image && <DecoLines color={accentColor} opacity={0.2} />}
 
             <div className="relative z-10 px-8 py-6 flex flex-col items-center justify-center h-full">
               {/* Top accent line */}
               <div
                 className="w-16 h-1 rounded-full mb-6"
-                style={{ background: accentColor }}
+                style={{ background: slideData.image ? '#ffffff' : accentColor }}
               />
 
               {/* Main title with enhanced typography */}
               <h1
                 className={`${titleSize} font-black mb-4 leading-tight tracking-tight`}
                 style={{
-                  color: styles.titleColor,
-                  textShadow: styles.glow ? `0 0 30px ${styles.titleColor}40` : 'none'
+                  color: slideData.image ? '#ffffff' : styles.titleColor,
+                  textShadow: slideData.image ? '0 2px 20px rgba(0,0,0,0.5)' : (styles.glow ? `0 0 30px ${styles.titleColor}40` : 'none')
                 }}
               >
                 {slideData.title || '제목을 입력하세요'}
@@ -330,20 +373,20 @@ export default function BatchFlowMaker({ onBack }) {
 
               {/* Subtitle with decorative elements */}
               <div className="flex items-center gap-3">
-                <div className="w-8 h-px" style={{ background: styles.subtitleColor, opacity: 0.5 }} />
+                <div className="w-8 h-px" style={{ background: slideData.image ? 'rgba(255,255,255,0.5)' : styles.subtitleColor, opacity: 0.5 }} />
                 <p
                   className={`${subtitleSize} font-medium tracking-wide`}
-                  style={{ color: styles.subtitleColor }}
+                  style={{ color: slideData.image ? 'rgba(255,255,255,0.9)' : styles.subtitleColor }}
                 >
                   {slideData.subtitle || '부제목'}
                 </p>
-                <div className="w-8 h-px" style={{ background: styles.subtitleColor, opacity: 0.5 }} />
+                <div className="w-8 h-px" style={{ background: slideData.image ? 'rgba(255,255,255,0.5)' : styles.subtitleColor, opacity: 0.5 }} />
               </div>
 
               {/* Bottom accent */}
               <div
                 className="w-24 h-1 rounded-full mt-8"
-                style={{ background: `linear-gradient(90deg, transparent, ${accentColor}, transparent)` }}
+                style={{ background: slideData.image ? 'rgba(255,255,255,0.5)' : `linear-gradient(90deg, transparent, ${accentColor}, transparent)` }}
               />
             </div>
           </>
@@ -1014,6 +1057,47 @@ export default function BatchFlowMaker({ onBack }) {
                         className="w-full px-2 py-1.5 bg-white/10 border border-white/20 rounded text-white text-sm placeholder-white/40 focus:outline-none focus:border-purple-500"
                       />
                     )}
+
+                    {/* Image Upload Section */}
+                    <div className="mt-2 pt-2 border-t border-white/10">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        ref={el => imageInputRefs.current[index] = el}
+                        onChange={(e) => handleImageUpload(index, e)}
+                        className="hidden"
+                      />
+                      {contentData[index]?.image ? (
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-12 h-12 rounded bg-cover bg-center border border-white/20"
+                            style={{ backgroundImage: `url(${contentData[index].image})` }}
+                          />
+                          <div className="flex-1 text-xs text-white/60">배경 이미지 적용됨</div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeImage(index);
+                            }}
+                            className="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded transition"
+                            title="이미지 삭제"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            imageInputRefs.current[index]?.click();
+                          }}
+                          className="w-full flex items-center justify-center gap-2 px-2 py-1.5 bg-white/5 border border-dashed border-white/20 rounded text-white/50 text-xs hover:bg-white/10 hover:text-white/70 transition"
+                        >
+                          <ImagePlus className="w-4 h-4" />
+                          배경 이미지 추가
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))}
 

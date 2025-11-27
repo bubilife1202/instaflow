@@ -3,7 +3,7 @@ import { toPng } from 'html-to-image';
 import JSZip from 'jszip';
 import {
   ChevronRight, ChevronLeft, Sparkles, Download, Wand2, RotateCcw,
-  Settings, Eye, Edit3, Palette, Check, X, Zap, Copy, Plus, Trash2
+  Settings, Eye, Edit3, Palette, Check, X, Zap, Copy, ChevronDown, ChevronUp
 } from 'lucide-react';
 
 // Import data
@@ -11,18 +11,16 @@ import { FLOW_STRUCTURES, FLOW_CATEGORIES, getFlowStructuresList } from '../data
 import { THEME_PACKS, PACK_CATEGORIES, getThemePacksList } from '../data/themePacks';
 import {
   hasApiKey, getApiKey, saveApiKey, generateTitles,
-  generateFullContent, getTitleSuggestions, TITLE_PATTERNS
+  generateFullContent, getTitleSuggestions
 } from '../services/geminiAI';
 
 /**
  * BatchFlowMaker - One-click card news generator
  * Step 1: Select structure
- * Step 2: Input content
- * Step 3: Select theme
- * Step 4: Preview & Download
+ * Step 2: Left=Input Form, Right=Theme+Preview (simultaneous)
  */
 export default function BatchFlowMaker({ onBack }) {
-  // Current step: 1=structure, 2=content, 3=theme, 4=preview
+  // Current step: 1=structure, 2=editor+preview
   const [step, setStep] = useState(1);
 
   // Selected structure
@@ -31,8 +29,8 @@ export default function BatchFlowMaker({ onBack }) {
   // Content data for each slide
   const [contentData, setContentData] = useState({});
 
-  // Selected theme pack
-  const [selectedThemePack, setSelectedThemePack] = useState(null);
+  // Selected theme pack - default to first one
+  const [selectedThemePack, setSelectedThemePack] = useState('modernMinimal');
 
   // Preview settings
   const [aspectRatio, setAspectRatio] = useState('4:5');
@@ -55,6 +53,12 @@ export default function BatchFlowMaker({ onBack }) {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [searchTag, setSearchTag] = useState('');
 
+  // Theme panel collapse state
+  const [showThemePanel, setShowThemePanel] = useState(true);
+
+  // Current preview slide index
+  const [previewIndex, setPreviewIndex] = useState(0);
+
   // Refs for download
   const slideRefs = useRef([]);
 
@@ -70,22 +74,15 @@ export default function BatchFlowMaker({ onBack }) {
     return true;
   });
 
-  // Filter theme packs
-  const [themeCategory, setThemeCategory] = useState('all');
-  const filteredPacks = getThemePacksList().filter(p => {
-    if (themeCategory !== 'all' && p.category !== themeCategory) return false;
-    return true;
-  });
-
   // Handle structure selection
   const handleSelectStructure = (structure) => {
     setSelectedStructure(structure);
-    // Initialize content data based on structure
     const initialData = {};
     structure.slides.forEach((slide, index) => {
       initialData[index] = { type: slide.type, ...getDefaultContent(slide) };
     });
     setContentData(initialData);
+    setStep(2);
   };
 
   // Get default content for slide type
@@ -166,7 +163,6 @@ export default function BatchFlowMaker({ onBack }) {
     if (!topic.trim()) return;
 
     if (!hasApiKey()) {
-      // Show offline suggestions
       setAiSuggestions(getTitleSuggestions(topic));
       return;
     }
@@ -176,7 +172,6 @@ export default function BatchFlowMaker({ onBack }) {
       const titles = await generateTitles(topic);
       setAiSuggestions(titles.map(t => ({ suggestion: t })));
     } catch (error) {
-      // Fallback to offline suggestions
       setAiSuggestions(getTitleSuggestions(topic));
     }
     setIsGenerating(false);
@@ -195,8 +190,8 @@ export default function BatchFlowMaker({ onBack }) {
   };
 
   // Render slide preview
-  const renderSlidePreview = (slideData, index) => {
-    const themePack = selectedThemePack ? THEME_PACKS[selectedThemePack] : THEME_PACKS['modernMinimal'];
+  const renderSlidePreview = (slideData, index, forDownload = false) => {
+    const themePack = THEME_PACKS[selectedThemePack] || THEME_PACKS['modernMinimal'];
     const slideType = slideData.type;
 
     let styles = {};
@@ -211,25 +206,25 @@ export default function BatchFlowMaker({ onBack }) {
     const containerStyle = {
       background: styles.background,
       color: styles.textColor || styles.titleColor,
-      ...(styles.pattern && { backgroundImage: styles.pattern })
+      ...(styles.pattern && { backgroundImage: `${styles.pattern}, ${styles.background}` })
     };
 
     return (
       <div
-        ref={el => slideRefs.current[index] = el}
-        className="w-full h-full flex flex-col items-center justify-center p-8 text-center"
+        ref={forDownload ? (el => slideRefs.current[index] = el) : null}
+        className="w-full h-full flex flex-col items-center justify-center p-6 text-center relative"
         style={containerStyle}
       >
         {slideType === 'cover' && (
           <>
             <h1
-              className="text-3xl md:text-4xl font-black mb-4 leading-tight"
+              className="text-2xl md:text-3xl font-black mb-3 leading-tight"
               style={{ color: styles.titleColor }}
             >
               {slideData.title || '제목을 입력하세요'}
             </h1>
             <p
-              className="text-lg md:text-xl opacity-90"
+              className="text-base md:text-lg opacity-90"
               style={{ color: styles.subtitleColor }}
             >
               {slideData.subtitle || '부제목'}
@@ -240,31 +235,31 @@ export default function BatchFlowMaker({ onBack }) {
         {(slideType === 'item' || slideType === 'step') && (
           <>
             <div
-              className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-black mb-4"
+              className="w-12 h-12 rounded-full flex items-center justify-center text-xl font-black mb-3"
               style={{ background: styles.numberBg, color: styles.numberColor }}
             >
               {slideData.number || index}
             </div>
             <h2
-              className="text-2xl md:text-3xl font-bold mb-3"
+              className="text-xl md:text-2xl font-bold mb-2"
               style={{ color: styles.titleColor }}
             >
               {slideData.itemTitle || slideData.stepTitle || '항목 제목'}
             </h2>
             <p
-              className="text-base md:text-lg"
+              className="text-sm md:text-base"
               style={{ color: styles.textColor }}
             >
-              {slideData.itemDescription || slideData.stepDescription || '설명'}
+              {slideData.itemDescription || slideData.stepDescription || '설명을 입력하세요'}
             </p>
           </>
         )}
 
         {slideType === 'question' && (
           <>
-            <div className="text-5xl mb-4">?</div>
+            <div className="text-4xl mb-3">❓</div>
             <h2
-              className="text-2xl md:text-3xl font-bold"
+              className="text-xl md:text-2xl font-bold"
               style={{ color: styles.titleColor }}
             >
               {slideData.questionText || '질문을 입력하세요'}
@@ -274,15 +269,15 @@ export default function BatchFlowMaker({ onBack }) {
 
         {slideType === 'answer' && (
           <>
-            <div className="text-5xl mb-4">!</div>
+            <div className="text-4xl mb-3">💡</div>
             <h2
-              className="text-2xl md:text-3xl font-bold mb-3"
+              className="text-xl md:text-2xl font-bold mb-2"
               style={{ color: styles.titleColor }}
             >
               {slideData.answerText || '답변'}
             </h2>
             <p
-              className="text-base md:text-lg"
+              className="text-sm md:text-base"
               style={{ color: styles.textColor }}
             >
               {slideData.answerDetail || ''}
@@ -292,15 +287,15 @@ export default function BatchFlowMaker({ onBack }) {
 
         {slideType === 'quote' && (
           <>
-            <div className="text-4xl mb-4">"</div>
+            <div className="text-3xl mb-3">"</div>
             <p
-              className="text-xl md:text-2xl font-medium italic mb-4"
+              className="text-lg md:text-xl font-medium italic mb-3"
               style={{ color: styles.titleColor }}
             >
               {slideData.quoteText || '명언을 입력하세요'}
             </p>
             {slideData.quoteAuthor && (
-              <p className="text-sm opacity-70" style={{ color: styles.textColor }}>
+              <p className="text-xs opacity-70" style={{ color: styles.textColor }}>
                 - {slideData.quoteAuthor}
               </p>
             )}
@@ -310,13 +305,13 @@ export default function BatchFlowMaker({ onBack }) {
         {slideType === 'cta' && (
           <>
             <h2
-              className="text-2xl md:text-3xl font-bold mb-4"
+              className="text-xl md:text-2xl font-bold mb-4"
               style={{ color: styles.titleColor }}
             >
               {slideData.ctaText || '지금 바로 시작하세요!'}
             </h2>
             <div
-              className="px-6 py-3 rounded-full font-bold text-lg"
+              className="px-5 py-2 rounded-full font-bold text-base"
               style={{ background: styles.buttonBg, color: styles.buttonColor }}
             >
               {slideData.ctaAction || '팔로우하기'}
@@ -324,21 +319,19 @@ export default function BatchFlowMaker({ onBack }) {
           </>
         )}
 
-        {/* Generic fallback for other types */}
+        {/* Generic fallback */}
         {!['cover', 'item', 'step', 'question', 'answer', 'quote', 'cta'].includes(slideType) && (
-          <>
-            <h2
-              className="text-2xl font-bold mb-3"
-              style={{ color: styles.titleColor }}
-            >
-              {Object.values(slideData).find(v => typeof v === 'string' && v) || slideType}
-            </h2>
-          </>
+          <div style={{ color: styles.titleColor }}>
+            <div className="text-3xl mb-3">📝</div>
+            <p className="text-lg font-medium">
+              {Object.values(slideData).find(v => typeof v === 'string' && v && v !== slideType) || `${slideType} 슬라이드`}
+            </p>
+          </div>
         )}
 
         {/* Instagram ID watermark */}
         {instagramId && (
-          <div className="absolute bottom-4 right-4 text-xs opacity-50">
+          <div className="absolute bottom-2 right-3 text-[10px] opacity-40" style={{ color: styles.textColor || styles.titleColor }}>
             {instagramId}
           </div>
         )}
@@ -414,9 +407,10 @@ export default function BatchFlowMaker({ onBack }) {
       setStep(1);
       setSelectedStructure(null);
       setContentData({});
-      setSelectedThemePack(null);
+      setSelectedThemePack('modernMinimal');
       setTopic('');
       setAiSuggestions([]);
+      setPreviewIndex(0);
     }
   };
 
@@ -436,81 +430,75 @@ export default function BatchFlowMaker({ onBack }) {
               <div>
                 <h1 className="text-xl font-bold text-white flex items-center gap-2">
                   <Zap className="w-5 h-5 text-yellow-400" />
-                  Batch Flow Maker
+                  원클릭 메이커
                 </h1>
-                <p className="text-xs text-white/60">카드뉴스 원클릭 메이커</p>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
+              {step === 2 && (
+                <>
+                  <div className="flex gap-1 mr-2">
+                    <button
+                      onClick={() => setAspectRatio('1:1')}
+                      className={`px-2 py-1 rounded text-xs font-medium transition ${
+                        aspectRatio === '1:1' ? 'bg-purple-500 text-white' : 'bg-white/10 text-white/70'
+                      }`}
+                    >
+                      1:1
+                    </button>
+                    <button
+                      onClick={() => setAspectRatio('4:5')}
+                      className={`px-2 py-1 rounded text-xs font-medium transition ${
+                        aspectRatio === '4:5' ? 'bg-purple-500 text-white' : 'bg-white/10 text-white/70'
+                      }`}
+                    >
+                      4:5
+                    </button>
+                  </div>
+                  <button
+                    onClick={downloadAll}
+                    disabled={isDownloading}
+                    className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg font-bold text-sm hover:from-green-600 hover:to-emerald-700 transition flex items-center gap-2 disabled:opacity-50"
+                  >
+                    <Download className="w-4 h-4" />
+                    {isDownloading ? `${downloadProgress?.current || 0}/${downloadProgress?.total || 0}` : '다운로드'}
+                  </button>
+                </>
+              )}
               <button
                 onClick={() => setShowAISettings(true)}
                 className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition"
-                title="AI 설정"
               >
                 <Settings className="w-5 h-5" />
               </button>
               <button
                 onClick={handleReset}
                 className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition"
-                title="초기화"
               >
                 <RotateCcw className="w-5 h-5" />
               </button>
             </div>
           </div>
-
-          {/* Progress Steps */}
-          <div className="flex items-center gap-2 mt-4">
-            {[
-              { num: 1, label: '구조 선택' },
-              { num: 2, label: '내용 입력' },
-              { num: 3, label: '테마 선택' },
-              { num: 4, label: '미리보기' }
-            ].map((s, i) => (
-              <div key={s.num} className="flex items-center">
-                <button
-                  onClick={() => {
-                    if (s.num <= step || (s.num === 2 && selectedStructure)) setStep(s.num);
-                  }}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition ${
-                    step === s.num
-                      ? 'bg-purple-500 text-white'
-                      : step > s.num
-                      ? 'bg-green-500/20 text-green-400'
-                      : 'bg-white/10 text-white/50'
-                  }`}
-                >
-                  {step > s.num ? <Check className="w-4 h-4" /> : s.num}
-                  <span className="hidden sm:inline">{s.label}</span>
-                </button>
-                {i < 3 && (
-                  <ChevronRight className="w-4 h-4 text-white/30 mx-1" />
-                )}
-              </div>
-            ))}
-          </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="max-w-7xl mx-auto px-4 py-4">
         {/* Step 1: Structure Selection */}
         {step === 1 && (
           <div className="space-y-6">
-            <div className="text-center mb-8">
+            <div className="text-center mb-6">
               <h2 className="text-2xl font-bold text-white mb-2">어떤 구조로 만들까요?</h2>
               <p className="text-white/60">목적에 맞는 카드뉴스 구조를 선택하세요</p>
             </div>
 
             {/* Category Filter */}
-            <div className="flex flex-wrap gap-2 justify-center mb-6">
+            <div className="flex flex-wrap gap-2 justify-center mb-4">
               <button
                 onClick={() => setCategoryFilter('all')}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-                  categoryFilter === 'all'
-                    ? 'bg-purple-500 text-white'
-                    : 'bg-white/10 text-white/70 hover:bg-white/20'
+                  categoryFilter === 'all' ? 'bg-purple-500 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20'
                 }`}
               >
                 전체
@@ -520,9 +508,7 @@ export default function BatchFlowMaker({ onBack }) {
                   key={key}
                   onClick={() => setCategoryFilter(key)}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-                    categoryFilter === key
-                      ? 'bg-purple-500 text-white'
-                      : 'bg-white/10 text-white/70 hover:bg-white/20'
+                    categoryFilter === key ? 'bg-purple-500 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20'
                   }`}
                 >
                   {cat.name}
@@ -530,476 +516,369 @@ export default function BatchFlowMaker({ onBack }) {
               ))}
             </div>
 
-            {/* Search by tag */}
-            <div className="max-w-md mx-auto mb-6">
-              <input
-                type="text"
-                value={searchTag}
-                onChange={(e) => setSearchTag(e.target.value)}
-                placeholder="태그로 검색 (예: 리스트, 꿀팁, 후기...)"
-                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-purple-500"
-              />
-            </div>
-
             {/* Structure Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
               {filteredStructures.map(structure => (
                 <button
                   key={structure.id}
-                  onClick={() => {
-                    handleSelectStructure(structure);
-                    setStep(2);
-                  }}
-                  className={`group p-6 bg-white/5 border border-white/10 rounded-2xl text-left hover:bg-white/10 hover:border-purple-500/50 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-purple-500/10 ${
-                    selectedStructure?.id === structure.id ? 'border-purple-500 bg-purple-500/10' : ''
-                  }`}
+                  onClick={() => handleSelectStructure(structure)}
+                  className="group p-4 bg-white/5 border border-white/10 rounded-xl text-left hover:bg-white/10 hover:border-purple-500/50 transition-all duration-300 hover:scale-[1.02]"
                 >
-                  <div className="text-4xl mb-3">{structure.icon}</div>
-                  <h3 className="text-lg font-bold text-white mb-1">{structure.name}</h3>
-                  <p className="text-sm text-white/60 mb-3">{structure.description}</p>
-                  <div className="flex flex-wrap gap-1">
-                    {structure.tags.slice(0, 3).map(tag => (
-                      <span key={tag} className="px-2 py-0.5 bg-white/10 rounded text-xs text-white/50">
-                        #{tag}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="mt-4 text-xs text-white/40">
-                    {structure.slides.length}개 슬라이드
-                  </div>
+                  <div className="text-3xl mb-2">{structure.icon}</div>
+                  <h3 className="text-sm font-bold text-white mb-1">{structure.name}</h3>
+                  <p className="text-xs text-white/50 mb-2 line-clamp-2">{structure.description}</p>
+                  <div className="text-xs text-purple-400">{structure.slides.length}장</div>
                 </button>
               ))}
             </div>
           </div>
         )}
 
-        {/* Step 2: Content Input */}
+        {/* Step 2: Editor + Preview */}
         {step === 2 && selectedStructure && (
-          <div className="grid lg:grid-cols-2 gap-6">
-            {/* Input Form */}
-            <div className="space-y-4">
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+          <div className="grid lg:grid-cols-2 gap-4 h-[calc(100vh-120px)]">
+            {/* Left Panel: Input Form */}
+            <div className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col overflow-hidden">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-lg font-bold text-white flex items-center gap-2">
                   <Edit3 className="w-5 h-5 text-purple-400" />
                   내용 입력
                 </h2>
+                <button
+                  onClick={() => setStep(1)}
+                  className="text-xs text-white/50 hover:text-white flex items-center gap-1"
+                >
+                  <ChevronLeft className="w-3 h-3" /> 구조 변경
+                </button>
+              </div>
 
-                {/* Topic & AI Generation */}
-                <div className="mb-6 p-4 bg-purple-500/10 border border-purple-500/30 rounded-xl">
-                  <label className="block text-sm font-medium text-white/80 mb-2">
-                    주제 입력 (AI 생성에 사용)
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={topic}
-                      onChange={(e) => setTopic(e.target.value)}
-                      placeholder="예: 다이어트 꿀팁, 신상 맛집 추천..."
-                      className="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-purple-500"
-                    />
-                    <button
-                      onClick={handleGenerateAI}
-                      disabled={isGenerating}
-                      className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-medium hover:from-purple-600 hover:to-pink-600 transition disabled:opacity-50 flex items-center gap-2"
-                    >
-                      <Wand2 className="w-4 h-4" />
-                      {isGenerating ? '생성 중...' : 'AI 생성'}
-                    </button>
-                  </div>
-
-                  {/* Title Suggestions */}
-                  {topic && (
-                    <div className="mt-3">
+              {/* AI Topic Input */}
+              <div className="mb-3 p-3 bg-purple-500/10 border border-purple-500/30 rounded-lg">
+                <div className="flex gap-2 mb-2">
+                  <input
+                    type="text"
+                    value={topic}
+                    onChange={(e) => setTopic(e.target.value)}
+                    placeholder="주제 입력 (예: 다이어트 꿀팁)"
+                    className="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm placeholder-white/40 focus:outline-none focus:border-purple-500"
+                  />
+                  <button
+                    onClick={handleGenerateAI}
+                    disabled={isGenerating}
+                    className="px-3 py-2 bg-purple-500 text-white rounded-lg font-medium text-sm hover:bg-purple-600 transition disabled:opacity-50 flex items-center gap-1"
+                  >
+                    <Wand2 className="w-4 h-4" />
+                    {isGenerating ? '...' : 'AI'}
+                  </button>
+                </div>
+                {topic && (
+                  <button
+                    onClick={handleGetTitleSuggestions}
+                    className="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1"
+                  >
+                    <Sparkles className="w-3 h-3" /> 터지는 제목 추천
+                  </button>
+                )}
+                {aiSuggestions.length > 0 && (
+                  <div className="mt-2 space-y-1 max-h-24 overflow-y-auto">
+                    {aiSuggestions.map((s, i) => (
                       <button
-                        onClick={handleGetTitleSuggestions}
-                        className="text-sm text-purple-400 hover:text-purple-300 flex items-center gap-1"
+                        key={i}
+                        onClick={() => applyTitleSuggestion(s.suggestion)}
+                        className="block w-full text-left px-2 py-1 bg-white/5 rounded text-xs text-white/80 hover:bg-white/10 transition truncate"
                       >
-                        <Sparkles className="w-3 h-3" />
-                        터지는 제목 추천받기
+                        {s.suggestion}
                       </button>
-                      {aiSuggestions.length > 0 && (
-                        <div className="mt-2 space-y-1">
-                          {aiSuggestions.map((s, i) => (
-                            <button
-                              key={i}
-                              onClick={() => applyTitleSuggestion(s.suggestion)}
-                              className="block w-full text-left px-3 py-2 bg-white/5 rounded-lg text-sm text-white/80 hover:bg-white/10 transition"
-                            >
-                              {s.suggestion}
-                            </button>
-                          ))}
-                        </div>
-                      )}
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Slide Forms */}
+              <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
+                {selectedStructure.slides.map((slide, index) => (
+                  <div
+                    key={index}
+                    className={`p-3 rounded-lg border transition cursor-pointer ${
+                      previewIndex === index
+                        ? 'bg-purple-500/20 border-purple-500/50'
+                        : 'bg-white/5 border-white/10 hover:border-white/20'
+                    }`}
+                    onClick={() => setPreviewIndex(index)}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center text-[10px] font-bold text-white">
+                        {index + 1}
+                      </span>
+                      <span className="text-xs font-medium text-white/80">{slide.label}</span>
                     </div>
-                  )}
-                </div>
 
-                {/* Slide Content Forms */}
-                <div className="space-y-4 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
-                  {selectedStructure.slides.map((slide, index) => (
-                    <div key={index} className="p-4 bg-white/5 border border-white/10 rounded-xl">
-                      <div className="flex items-center gap-2 mb-3">
-                        <span className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center text-xs font-bold text-white">
-                          {index + 1}
-                        </span>
-                        <span className="font-medium text-white">{slide.label}</span>
-                        <span className="text-xs text-white/40">({slide.type})</span>
-                      </div>
-
-                      {/* Dynamic form fields based on slide type */}
-                      {slide.type === 'cover' && (
-                        <>
-                          <input
-                            type="text"
-                            value={contentData[index]?.title || ''}
-                            onChange={(e) => updateContent(index, 'title', e.target.value)}
-                            placeholder="메인 제목"
-                            className="w-full px-3 py-2 mb-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-purple-500"
-                          />
-                          <input
-                            type="text"
-                            value={contentData[index]?.subtitle || ''}
-                            onChange={(e) => updateContent(index, 'subtitle', e.target.value)}
-                            placeholder="부제목"
-                            className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-purple-500"
-                          />
-                        </>
-                      )}
-
-                      {(slide.type === 'item' || slide.type === 'step') && (
-                        <>
-                          <input
-                            type="text"
-                            value={contentData[index]?.itemTitle || contentData[index]?.stepTitle || ''}
-                            onChange={(e) => updateContent(index, slide.type === 'item' ? 'itemTitle' : 'stepTitle', e.target.value)}
-                            placeholder={slide.type === 'item' ? '항목 제목' : '단계 제목'}
-                            className="w-full px-3 py-2 mb-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-purple-500"
-                          />
-                          <textarea
-                            value={contentData[index]?.itemDescription || contentData[index]?.stepDescription || ''}
-                            onChange={(e) => updateContent(index, slide.type === 'item' ? 'itemDescription' : 'stepDescription', e.target.value)}
-                            placeholder="설명 (간결하게)"
-                            rows={2}
-                            className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-purple-500 resize-none"
-                          />
-                        </>
-                      )}
-
-                      {slide.type === 'question' && (
-                        <textarea
-                          value={contentData[index]?.questionText || ''}
-                          onChange={(e) => updateContent(index, 'questionText', e.target.value)}
-                          placeholder="질문 내용"
-                          rows={2}
-                          className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-purple-500 resize-none"
+                    {/* Dynamic form fields */}
+                    {slide.type === 'cover' && (
+                      <>
+                        <input
+                          type="text"
+                          value={contentData[index]?.title || ''}
+                          onChange={(e) => updateContent(index, 'title', e.target.value)}
+                          placeholder="메인 제목"
+                          className="w-full px-2 py-1.5 mb-2 bg-white/10 border border-white/20 rounded text-white text-sm placeholder-white/40 focus:outline-none focus:border-purple-500"
                         />
-                      )}
-
-                      {slide.type === 'answer' && (
-                        <>
-                          <input
-                            type="text"
-                            value={contentData[index]?.answerText || ''}
-                            onChange={(e) => updateContent(index, 'answerText', e.target.value)}
-                            placeholder="핵심 답변"
-                            className="w-full px-3 py-2 mb-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-purple-500"
-                          />
-                          <textarea
-                            value={contentData[index]?.answerDetail || ''}
-                            onChange={(e) => updateContent(index, 'answerDetail', e.target.value)}
-                            placeholder="추가 설명"
-                            rows={2}
-                            className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-purple-500 resize-none"
-                          />
-                        </>
-                      )}
-
-                      {slide.type === 'quote' && (
-                        <>
-                          <textarea
-                            value={contentData[index]?.quoteText || ''}
-                            onChange={(e) => updateContent(index, 'quoteText', e.target.value)}
-                            placeholder="명언 / 인용구"
-                            rows={2}
-                            className="w-full px-3 py-2 mb-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-purple-500 resize-none"
-                          />
-                          <input
-                            type="text"
-                            value={contentData[index]?.quoteAuthor || ''}
-                            onChange={(e) => updateContent(index, 'quoteAuthor', e.target.value)}
-                            placeholder="출처 (선택)"
-                            className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-purple-500"
-                          />
-                        </>
-                      )}
-
-                      {slide.type === 'cta' && (
-                        <>
-                          <input
-                            type="text"
-                            value={contentData[index]?.ctaText || ''}
-                            onChange={(e) => updateContent(index, 'ctaText', e.target.value)}
-                            placeholder="CTA 문구 (예: 지금 시작하세요!)"
-                            className="w-full px-3 py-2 mb-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-purple-500"
-                          />
-                          <input
-                            type="text"
-                            value={contentData[index]?.ctaAction || ''}
-                            onChange={(e) => updateContent(index, 'ctaAction', e.target.value)}
-                            placeholder="버튼 텍스트 (예: 팔로우하기)"
-                            className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-purple-500"
-                          />
-                        </>
-                      )}
-
-                      {/* Generic text input for other types */}
-                      {!['cover', 'item', 'step', 'question', 'answer', 'quote', 'cta'].includes(slide.type) && (
-                        <textarea
-                          value={Object.entries(contentData[index] || {}).find(([k, v]) => k !== 'type' && typeof v === 'string')?.[1] || ''}
-                          onChange={(e) => {
-                            const field = Object.keys(contentData[index] || {}).find(k => k !== 'type') || 'text';
-                            updateContent(index, field, e.target.value);
-                          }}
-                          placeholder="내용 입력"
-                          rows={2}
-                          className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-purple-500 resize-none"
+                        <input
+                          type="text"
+                          value={contentData[index]?.subtitle || ''}
+                          onChange={(e) => updateContent(index, 'subtitle', e.target.value)}
+                          placeholder="부제목"
+                          className="w-full px-2 py-1.5 bg-white/10 border border-white/20 rounded text-white text-sm placeholder-white/40 focus:outline-none focus:border-purple-500"
                         />
-                      )}
-                    </div>
-                  ))}
-                </div>
+                      </>
+                    )}
+
+                    {(slide.type === 'item' || slide.type === 'step') && (
+                      <>
+                        <input
+                          type="text"
+                          value={contentData[index]?.itemTitle || contentData[index]?.stepTitle || ''}
+                          onChange={(e) => updateContent(index, slide.type === 'item' ? 'itemTitle' : 'stepTitle', e.target.value)}
+                          placeholder="제목"
+                          className="w-full px-2 py-1.5 mb-2 bg-white/10 border border-white/20 rounded text-white text-sm placeholder-white/40 focus:outline-none focus:border-purple-500"
+                        />
+                        <input
+                          type="text"
+                          value={contentData[index]?.itemDescription || contentData[index]?.stepDescription || ''}
+                          onChange={(e) => updateContent(index, slide.type === 'item' ? 'itemDescription' : 'stepDescription', e.target.value)}
+                          placeholder="설명"
+                          className="w-full px-2 py-1.5 bg-white/10 border border-white/20 rounded text-white text-sm placeholder-white/40 focus:outline-none focus:border-purple-500"
+                        />
+                      </>
+                    )}
+
+                    {slide.type === 'question' && (
+                      <input
+                        type="text"
+                        value={contentData[index]?.questionText || ''}
+                        onChange={(e) => updateContent(index, 'questionText', e.target.value)}
+                        placeholder="질문"
+                        className="w-full px-2 py-1.5 bg-white/10 border border-white/20 rounded text-white text-sm placeholder-white/40 focus:outline-none focus:border-purple-500"
+                      />
+                    )}
+
+                    {slide.type === 'answer' && (
+                      <>
+                        <input
+                          type="text"
+                          value={contentData[index]?.answerText || ''}
+                          onChange={(e) => updateContent(index, 'answerText', e.target.value)}
+                          placeholder="핵심 답변"
+                          className="w-full px-2 py-1.5 mb-2 bg-white/10 border border-white/20 rounded text-white text-sm placeholder-white/40 focus:outline-none focus:border-purple-500"
+                        />
+                        <input
+                          type="text"
+                          value={contentData[index]?.answerDetail || ''}
+                          onChange={(e) => updateContent(index, 'answerDetail', e.target.value)}
+                          placeholder="추가 설명"
+                          className="w-full px-2 py-1.5 bg-white/10 border border-white/20 rounded text-white text-sm placeholder-white/40 focus:outline-none focus:border-purple-500"
+                        />
+                      </>
+                    )}
+
+                    {slide.type === 'quote' && (
+                      <>
+                        <input
+                          type="text"
+                          value={contentData[index]?.quoteText || ''}
+                          onChange={(e) => updateContent(index, 'quoteText', e.target.value)}
+                          placeholder="명언/인용구"
+                          className="w-full px-2 py-1.5 mb-2 bg-white/10 border border-white/20 rounded text-white text-sm placeholder-white/40 focus:outline-none focus:border-purple-500"
+                        />
+                        <input
+                          type="text"
+                          value={contentData[index]?.quoteAuthor || ''}
+                          onChange={(e) => updateContent(index, 'quoteAuthor', e.target.value)}
+                          placeholder="출처 (선택)"
+                          className="w-full px-2 py-1.5 bg-white/10 border border-white/20 rounded text-white text-sm placeholder-white/40 focus:outline-none focus:border-purple-500"
+                        />
+                      </>
+                    )}
+
+                    {slide.type === 'cta' && (
+                      <>
+                        <input
+                          type="text"
+                          value={contentData[index]?.ctaText || ''}
+                          onChange={(e) => updateContent(index, 'ctaText', e.target.value)}
+                          placeholder="CTA 문구"
+                          className="w-full px-2 py-1.5 mb-2 bg-white/10 border border-white/20 rounded text-white text-sm placeholder-white/40 focus:outline-none focus:border-purple-500"
+                        />
+                        <input
+                          type="text"
+                          value={contentData[index]?.ctaAction || ''}
+                          onChange={(e) => updateContent(index, 'ctaAction', e.target.value)}
+                          placeholder="버튼 텍스트"
+                          className="w-full px-2 py-1.5 bg-white/10 border border-white/20 rounded text-white text-sm placeholder-white/40 focus:outline-none focus:border-purple-500"
+                        />
+                      </>
+                    )}
+
+                    {/* Generic input for other types */}
+                    {!['cover', 'item', 'step', 'question', 'answer', 'quote', 'cta'].includes(slide.type) && (
+                      <input
+                        type="text"
+                        value={Object.entries(contentData[index] || {}).find(([k, v]) => k !== 'type' && typeof v === 'string')?.[1] || ''}
+                        onChange={(e) => {
+                          const field = Object.keys(contentData[index] || {}).find(k => k !== 'type' && k !== 'number') || 'text';
+                          updateContent(index, field, e.target.value);
+                        }}
+                        placeholder="내용 입력"
+                        className="w-full px-2 py-1.5 bg-white/10 border border-white/20 rounded text-white text-sm placeholder-white/40 focus:outline-none focus:border-purple-500"
+                      />
+                    )}
+                  </div>
+                ))}
 
                 {/* Instagram ID */}
-                <div className="mt-4 pt-4 border-t border-white/10">
-                  <label className="block text-sm font-medium text-white/60 mb-2">
-                    Instagram ID (워터마크)
-                  </label>
+                <div className="p-3 bg-white/5 border border-white/10 rounded-lg">
+                  <label className="text-xs text-white/50 mb-1 block">Instagram ID</label>
                   <input
                     type="text"
                     value={instagramId}
                     onChange={(e) => setInstagramId(e.target.value)}
                     placeholder="@your_instagram"
-                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-purple-500"
+                    className="w-full px-2 py-1.5 bg-white/10 border border-white/20 rounded text-white text-sm placeholder-white/40 focus:outline-none focus:border-purple-500"
                   />
                 </div>
               </div>
-
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setStep(1)}
-                  className="px-6 py-3 bg-white/10 text-white rounded-xl font-medium hover:bg-white/20 transition"
-                >
-                  <ChevronLeft className="w-5 h-5 inline mr-1" />
-                  이전
-                </button>
-                <button
-                  onClick={() => setStep(3)}
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-bold hover:from-purple-600 hover:to-pink-600 transition"
-                >
-                  테마 선택하기
-                  <ChevronRight className="w-5 h-5 inline ml-1" />
-                </button>
-              </div>
             </div>
 
-            {/* Live Preview (Mini) */}
-            <div className="hidden lg:block">
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-6 sticky top-32">
-                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                  <Eye className="w-5 h-5 text-purple-400" />
-                  실시간 미리보기
-                </h3>
-                <div className="grid grid-cols-3 gap-2">
-                  {Object.entries(contentData).slice(0, 6).map(([idx, data]) => (
-                    <div
+            {/* Right Panel: Theme + Preview */}
+            <div className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col overflow-hidden">
+              {/* Theme Selector */}
+              <div className="mb-3">
+                <button
+                  onClick={() => setShowThemePanel(!showThemePanel)}
+                  className="w-full flex items-center justify-between text-white mb-2"
+                >
+                  <span className="text-sm font-bold flex items-center gap-2">
+                    <Palette className="w-4 h-4 text-purple-400" />
+                    테마 선택
+                  </span>
+                  {showThemePanel ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
+
+                {showThemePanel && (
+                  <div className="grid grid-cols-5 gap-2 max-h-32 overflow-y-auto pr-1">
+                    {getThemePacksList().map(pack => (
+                      <button
+                        key={pack.id}
+                        onClick={() => setSelectedThemePack(pack.id)}
+                        className={`p-2 rounded-lg border transition ${
+                          selectedThemePack === pack.id
+                            ? 'border-purple-500 bg-purple-500/20'
+                            : 'border-white/10 hover:border-white/30'
+                        }`}
+                        title={pack.name}
+                      >
+                        <div
+                          className="w-full aspect-square rounded mb-1"
+                          style={{ background: pack.preview.background }}
+                        />
+                        <div className="text-[9px] text-white/60 truncate">{pack.name}</div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Preview */}
+              <div className="flex-1 flex flex-col">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-bold text-white flex items-center gap-2">
+                    <Eye className="w-4 h-4 text-purple-400" />
+                    미리보기
+                  </span>
+                  <span className="text-xs text-white/50">
+                    {previewIndex + 1} / {Object.keys(contentData).length}
+                  </span>
+                </div>
+
+                {/* Main Preview */}
+                <div className="flex-1 flex items-center justify-center">
+                  <div
+                    className="rounded-xl overflow-hidden shadow-2xl"
+                    style={{
+                      width: '100%',
+                      maxWidth: '280px',
+                      aspectRatio: aspectRatio === '1:1' ? '1/1' : '4/5'
+                    }}
+                  >
+                    {contentData[previewIndex] && renderSlidePreview(contentData[previewIndex], previewIndex)}
+                  </div>
+                </div>
+
+                {/* Slide Navigator */}
+                <div className="flex items-center justify-center gap-2 mt-3">
+                  <button
+                    onClick={() => setPreviewIndex(Math.max(0, previewIndex - 1))}
+                    disabled={previewIndex === 0}
+                    className="p-1 text-white/50 hover:text-white disabled:opacity-30"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <div className="flex gap-1">
+                    {Object.keys(contentData).map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setPreviewIndex(i)}
+                        className={`w-2 h-2 rounded-full transition ${
+                          previewIndex === i ? 'bg-purple-500' : 'bg-white/30 hover:bg-white/50'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => setPreviewIndex(Math.min(Object.keys(contentData).length - 1, previewIndex + 1))}
+                    disabled={previewIndex === Object.keys(contentData).length - 1}
+                    className="p-1 text-white/50 hover:text-white disabled:opacity-30"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Mini Thumbnails */}
+                <div className="flex gap-1 mt-3 overflow-x-auto pb-1">
+                  {Object.entries(contentData).map(([idx, data]) => (
+                    <button
                       key={idx}
-                      className="aspect-[4/5] rounded-lg overflow-hidden"
+                      onClick={() => setPreviewIndex(parseInt(idx))}
+                      className={`flex-shrink-0 rounded overflow-hidden border-2 transition ${
+                        previewIndex === parseInt(idx) ? 'border-purple-500' : 'border-transparent hover:border-white/30'
+                      }`}
                       style={{
-                        background: THEME_PACKS[selectedThemePack || 'modernMinimal']?.preview?.background || '#f0f0f0'
+                        width: '48px',
+                        aspectRatio: aspectRatio === '1:1' ? '1/1' : '4/5'
                       }}
                     >
-                      <div className="w-full h-full flex items-center justify-center p-2 text-center">
-                        <span className="text-[8px] truncate" style={{
-                          color: THEME_PACKS[selectedThemePack || 'modernMinimal']?.preview?.text || '#000'
-                        }}>
-                          {data.title || data.itemTitle || data.stepTitle || data.questionText || data.ctaText || `슬라이드 ${parseInt(idx) + 1}`}
-                        </span>
+                      <div className="w-full h-full scale-[0.15] origin-top-left" style={{ width: '320px', height: aspectRatio === '1:1' ? '320px' : '400px' }}>
+                        {renderSlidePreview(data, parseInt(idx))}
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>
             </div>
-          </div>
-        )}
 
-        {/* Step 3: Theme Selection */}
-        {step === 3 && (
-          <div className="space-y-6">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-white mb-2">테마를 선택하세요</h2>
-              <p className="text-white/60">선택한 테마가 모든 슬라이드에 적용됩니다</p>
-            </div>
-
-            {/* Theme Category Filter */}
-            <div className="flex flex-wrap gap-2 justify-center mb-6">
-              <button
-                onClick={() => setThemeCategory('all')}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-                  themeCategory === 'all'
-                    ? 'bg-purple-500 text-white'
-                    : 'bg-white/10 text-white/70 hover:bg-white/20'
-                }`}
-              >
-                전체
-              </button>
-              {Object.entries(PACK_CATEGORIES).map(([key, cat]) => (
-                <button
-                  key={key}
-                  onClick={() => setThemeCategory(key)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-                    themeCategory === key
-                      ? 'bg-purple-500 text-white'
-                      : 'bg-white/10 text-white/70 hover:bg-white/20'
-                  }`}
-                >
-                  {cat.name}
-                </button>
-              ))}
-            </div>
-
-            {/* Theme Pack Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-              {filteredPacks.map(pack => (
-                <button
-                  key={pack.id}
-                  onClick={() => {
-                    setSelectedThemePack(pack.id);
-                  }}
-                  className={`group p-4 bg-white/5 border rounded-2xl text-left hover:scale-[1.02] transition-all duration-300 ${
-                    selectedThemePack === pack.id
-                      ? 'border-purple-500 bg-purple-500/10 ring-2 ring-purple-500/50'
-                      : 'border-white/10 hover:border-purple-500/50'
-                  }`}
-                >
-                  {/* Preview */}
-                  <div
-                    className="aspect-[4/5] rounded-xl mb-3 flex items-center justify-center overflow-hidden"
-                    style={{
-                      background: pack.preview.background,
-                      color: pack.preview.text
-                    }}
-                  >
-                    <div className="text-center p-3">
-                      <div className="text-2xl mb-1">{pack.icon}</div>
-                      <div className="text-xs font-bold opacity-70">Preview</div>
-                    </div>
-                  </div>
-                  <h3 className="font-bold text-white text-sm">{pack.name}</h3>
-                  <p className="text-xs text-white/50 mt-1">{pack.description}</p>
-                  {selectedThemePack === pack.id && (
-                    <div className="absolute top-2 right-2 w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center">
-                      <Check className="w-4 h-4 text-white" />
-                    </div>
-                  )}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex gap-3 justify-center mt-8">
-              <button
-                onClick={() => setStep(2)}
-                className="px-6 py-3 bg-white/10 text-white rounded-xl font-medium hover:bg-white/20 transition"
-              >
-                <ChevronLeft className="w-5 h-5 inline mr-1" />
-                이전
-              </button>
-              <button
-                onClick={() => setStep(4)}
-                disabled={!selectedThemePack}
-                className="px-8 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-bold hover:from-purple-600 hover:to-pink-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                미리보기 & 다운로드
-                <ChevronRight className="w-5 h-5 inline ml-1" />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Step 4: Preview & Download */}
-        {step === 4 && selectedThemePack && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold text-white">미리보기</h2>
-                <p className="text-white/60">{Object.keys(contentData).length}개의 슬라이드가 준비되었습니다</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setAspectRatio('1:1')}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
-                      aspectRatio === '1:1' ? 'bg-purple-500 text-white' : 'bg-white/10 text-white/70'
-                    }`}
-                  >
-                    1:1
-                  </button>
-                  <button
-                    onClick={() => setAspectRatio('4:5')}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
-                      aspectRatio === '4:5' ? 'bg-purple-500 text-white' : 'bg-white/10 text-white/70'
-                    }`}
-                  >
-                    4:5
-                  </button>
-                </div>
-                <button
-                  onClick={downloadAll}
-                  disabled={isDownloading}
-                  className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-bold hover:from-green-600 hover:to-emerald-700 transition flex items-center gap-2 disabled:opacity-50"
-                >
-                  <Download className="w-5 h-5" />
-                  {isDownloading
-                    ? `${downloadProgress?.current || 0}/${downloadProgress?.total || 0}`
-                    : '전체 다운로드'
-                  }
-                </button>
-              </div>
-            </div>
-
-            {/* Slide Preview Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {Object.entries(contentData).map(([index, data]) => (
+            {/* Hidden slides for download */}
+            <div className="fixed -left-[9999px] -top-[9999px]">
+              {Object.entries(contentData).map(([idx, data]) => (
                 <div
-                  key={index}
-                  className="relative group"
-                  style={{ aspectRatio: aspectRatio === '1:1' ? '1/1' : '4/5' }}
+                  key={idx}
+                  style={{
+                    width: '1080px',
+                    height: aspectRatio === '1:1' ? '1080px' : '1350px'
+                  }}
                 >
-                  <div className="w-full h-full rounded-xl overflow-hidden shadow-xl">
-                    {renderSlidePreview(data, parseInt(index))}
-                  </div>
-                  <div className="absolute top-2 left-2 w-6 h-6 bg-black/50 rounded-full flex items-center justify-center text-xs font-bold text-white">
-                    {parseInt(index) + 1}
-                  </div>
+                  {renderSlidePreview(data, parseInt(idx), true)}
                 </div>
               ))}
-            </div>
-
-            <div className="flex gap-3 justify-center mt-8">
-              <button
-                onClick={() => setStep(3)}
-                className="px-6 py-3 bg-white/10 text-white rounded-xl font-medium hover:bg-white/20 transition"
-              >
-                <Palette className="w-5 h-5 inline mr-1" />
-                테마 변경
-              </button>
-              <button
-                onClick={() => setStep(2)}
-                className="px-6 py-3 bg-white/10 text-white rounded-xl font-medium hover:bg-white/20 transition"
-              >
-                <Edit3 className="w-5 h-5 inline mr-1" />
-                내용 수정
-              </button>
             </div>
           </div>
         )}
@@ -1009,31 +888,27 @@ export default function BatchFlowMaker({ onBack }) {
       {showAISettings && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowAISettings(false)}>
           <div className="bg-slate-800 rounded-2xl max-w-md w-full p-6 border border-white/10" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
                 <Settings className="w-5 h-5 text-purple-400" />
                 AI 설정
               </h2>
-              <button onClick={() => setShowAISettings(false)} className="p-2 text-white/50 hover:text-white">
+              <button onClick={() => setShowAISettings(false)} className="p-1 text-white/50 hover:text-white">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-white/80 mb-2">
-                  Gemini API Key
-                </label>
+                <label className="block text-sm font-medium text-white/80 mb-2">Gemini API Key</label>
                 <input
                   type="password"
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
                   placeholder="AIza..."
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-purple-500"
+                  className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-purple-500"
                 />
-                <p className="text-xs text-white/50 mt-2">
-                  Google AI Studio에서 무료로 API 키를 발급받을 수 있습니다.
-                </p>
+                <p className="text-xs text-white/50 mt-2">Google AI Studio에서 무료 발급</p>
               </div>
 
               <a
@@ -1042,14 +917,14 @@ export default function BatchFlowMaker({ onBack }) {
                 rel="noopener noreferrer"
                 className="block text-sm text-purple-400 hover:text-purple-300"
               >
-                API 키 발급받기 &rarr;
+                API 키 발급받기 →
               </a>
 
               <button
                 onClick={handleSaveApiKey}
-                className="w-full py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-bold hover:from-purple-600 hover:to-pink-600 transition"
+                className="w-full py-2 bg-purple-500 text-white rounded-lg font-bold hover:bg-purple-600 transition"
               >
-                저장하기
+                저장
               </button>
             </div>
           </div>

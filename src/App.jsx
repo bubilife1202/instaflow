@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { toPng } from 'html-to-image';
 import JSZip from 'jszip';
-import { Type, Heading1, Heading2, Bold, Sparkles, Minus, BookOpen, Image as ImageIcon, Instagram, RotateCcw, Copy, Wand2, FileText, Palette, Share2, Twitter, Facebook, Menu, X } from 'lucide-react';
+import { Type, Heading1, Heading2, Bold, Sparkles, Minus, BookOpen, Image as ImageIcon, Instagram, RotateCcw, Copy, Wand2, FileText, Palette, Share2, Twitter, Facebook, Menu, X, Zap, Edit3, ChevronRight } from 'lucide-react';
 
 // Import utilities and configuration
 import { parseSlide } from './utils/parseSlide';
@@ -22,6 +22,9 @@ import { InstagramStoryTheme } from './components/themes/InstagramStoryTheme';
 import { ModernGradientTheme } from './components/themes/ModernGradientTheme';
 import { EmotionalFilmTheme } from './components/themes/EmotionalFilmTheme';
 
+// Import new Batch Flow Maker
+import BatchFlowMaker from './components/BatchFlowMaker';
+
 const THEMES = THEME_DISPLAY_NAMES;
 
 // LocalStorage keys
@@ -33,7 +36,153 @@ const STORAGE_KEYS = {
   DESIGN_TEMPLATE: 'instaflow_design_template',
 };
 
-function App() {
+// Landing Page Component
+function LandingPage({ onSelectMode }) {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      {/* Hero Section */}
+      <div className="relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0" style={{
+            backgroundImage: 'radial-gradient(circle at 25px 25px, white 2%, transparent 0%)',
+            backgroundSize: '50px 50px'
+          }} />
+        </div>
+
+        <div className="max-w-6xl mx-auto px-4 py-16 md:py-24 relative">
+          {/* Logo */}
+          <div className="flex items-center justify-center gap-3 mb-8">
+            <div className="w-12 h-12 bg-gradient-to-br from-cyan-400 to-purple-600 rounded-xl flex items-center justify-center">
+              <Type className="w-7 h-7 text-white" />
+            </div>
+            <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight">InstaFlow</h1>
+            <span className="px-3 py-1 bg-gradient-to-r from-cyan-500 to-purple-500 text-white text-xs font-bold rounded-full">PRO</span>
+          </div>
+
+          {/* Tagline */}
+          <div className="text-center mb-12">
+            <h2 className="text-2xl md:text-4xl font-bold text-white mb-4">
+              인스타그램 카드뉴스,<br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400">3초만에 만들기</span>
+            </h2>
+            <p className="text-lg text-white/60 max-w-xl mx-auto">
+              디자인 경험 없이도 전문가 수준의 카드뉴스를 만들 수 있습니다.
+              내용만 입력하면 디자인은 자동으로!
+            </p>
+          </div>
+
+          {/* Mode Selection Cards */}
+          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            {/* Batch Flow Maker - Recommended */}
+            <button
+              onClick={() => onSelectMode('batch')}
+              className="group relative bg-gradient-to-br from-purple-500/20 to-pink-500/20 border-2 border-purple-500/50 rounded-3xl p-8 text-left hover:border-purple-400 hover:from-purple-500/30 hover:to-pink-500/30 transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-purple-500/20"
+            >
+              <div className="absolute top-4 right-4 px-3 py-1 bg-gradient-to-r from-yellow-400 to-orange-500 text-black text-xs font-bold rounded-full">
+                추천
+              </div>
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mb-6">
+                <Zap className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-2">원클릭 메이커</h3>
+              <p className="text-white/60 mb-4">
+                구조 선택 → 내용 입력 → 테마 적용<br />
+                6장 세트를 한 번에 완성!
+              </p>
+              <ul className="space-y-2 mb-6">
+                <li className="flex items-center gap-2 text-sm text-white/70">
+                  <span className="w-5 h-5 bg-green-500/20 rounded-full flex items-center justify-center text-green-400 text-xs">✓</span>
+                  10가지 검증된 구조 템플릿
+                </li>
+                <li className="flex items-center gap-2 text-sm text-white/70">
+                  <span className="w-5 h-5 bg-green-500/20 rounded-full flex items-center justify-center text-green-400 text-xs">✓</span>
+                  AI 제목 추천 (Gemini 연동)
+                </li>
+                <li className="flex items-center gap-2 text-sm text-white/70">
+                  <span className="w-5 h-5 bg-green-500/20 rounded-full flex items-center justify-center text-green-400 text-xs">✓</span>
+                  테마 팩 실시간 미리보기
+                </li>
+              </ul>
+              <div className="flex items-center text-purple-400 font-semibold group-hover:text-purple-300">
+                시작하기 <ChevronRight className="w-5 h-5 ml-1 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </button>
+
+            {/* Classic Editor */}
+            <button
+              onClick={() => onSelectMode('classic')}
+              className="group bg-white/5 border-2 border-white/10 rounded-3xl p-8 text-left hover:border-white/30 hover:bg-white/10 transition-all duration-300 hover:scale-[1.02]"
+            >
+              <div className="w-16 h-16 bg-gradient-to-br from-slate-600 to-slate-700 rounded-2xl flex items-center justify-center mb-6">
+                <Edit3 className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-2">클래식 에디터</h3>
+              <p className="text-white/60 mb-4">
+                마크다운으로 자유롭게 작성<br />
+                기존 사용자를 위한 에디터
+              </p>
+              <ul className="space-y-2 mb-6">
+                <li className="flex items-center gap-2 text-sm text-white/70">
+                  <span className="w-5 h-5 bg-white/10 rounded-full flex items-center justify-center text-white/50 text-xs">✓</span>
+                  자유로운 마크다운 문법
+                </li>
+                <li className="flex items-center gap-2 text-sm text-white/70">
+                  <span className="w-5 h-5 bg-white/10 rounded-full flex items-center justify-center text-white/50 text-xs">✓</span>
+                  8가지 테마 선택
+                </li>
+                <li className="flex items-center gap-2 text-sm text-white/70">
+                  <span className="w-5 h-5 bg-white/10 rounded-full flex items-center justify-center text-white/50 text-xs">✓</span>
+                  30+ 디자인 템플릿
+                </li>
+              </ul>
+              <div className="flex items-center text-white/60 font-semibold group-hover:text-white/80">
+                에디터 열기 <ChevronRight className="w-5 h-5 ml-1 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </button>
+          </div>
+
+          {/* Features */}
+          <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+            {[
+              { icon: '🚀', label: '서버 비용 없음', desc: '100% 무료' },
+              { icon: '🎨', label: '10+ 테마 팩', desc: '표지~CTA 세트' },
+              { icon: '🤖', label: 'AI 지원', desc: 'Gemini 연동' },
+              { icon: '📱', label: '고해상도', desc: '1080px 출력' },
+            ].map((f, i) => (
+              <div key={i} className="bg-white/5 rounded-2xl p-4 text-center">
+                <div className="text-3xl mb-2">{f.icon}</div>
+                <div className="font-bold text-white text-sm">{f.label}</div>
+                <div className="text-xs text-white/50">{f.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <footer className="py-8 border-t border-white/10">
+        <div className="max-w-6xl mx-auto px-4 text-center">
+          <div className="flex items-center justify-center gap-4 mb-4">
+            <a
+              href="https://www.instagram.com/reels_code_official"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition text-sm"
+            >
+              <Instagram className="w-4 h-4" />
+              Instagram
+            </a>
+          </div>
+          <p className="text-sm text-white/40">© 2024 InstaFlow. Made with ❤️</p>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+// Classic Editor Component (Original App)
+function ClassicEditor({ onBack }) {
   // Load from localStorage or use tutorial as default
   const [script, setScript] = useState(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.SCRIPT);
@@ -410,11 +559,18 @@ function App() {
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-3 md:py-4">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
+              <button
+                onClick={onBack}
+                className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition"
+                title="메인으로"
+              >
+                <X className="w-5 h-5" />
+              </button>
               <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-lg flex items-center justify-center">
                 <Type className="w-5 h-5 md:w-6 md:h-6 text-white" />
               </div>
               <h1 className="text-xl md:text-2xl font-black text-white tracking-tight">InstaFlow</h1>
-              <span className="px-2 py-0.5 md:py-1 bg-cyan-500/20 text-cyan-400 text-[10px] md:text-xs font-bold rounded border border-cyan-500/30">PRO</span>
+              <span className="px-2 py-0.5 md:py-1 bg-cyan-500/20 text-cyan-400 text-[10px] md:text-xs font-bold rounded border border-cyan-500/30">클래식</span>
             </div>
 
             {/* Mobile Menu Toggle */}
@@ -1055,6 +1211,35 @@ function App() {
       )}
     </div>
   );
+}
+
+// Main App Component with Mode Selection
+function App() {
+  const [mode, setMode] = useState(() => {
+    return localStorage.getItem('instaflow_mode') || null;
+  });
+
+  const handleSelectMode = (selectedMode) => {
+    setMode(selectedMode);
+    localStorage.setItem('instaflow_mode', selectedMode);
+  };
+
+  const handleBack = () => {
+    setMode(null);
+    localStorage.removeItem('instaflow_mode');
+  };
+
+  // Render based on mode
+  if (mode === 'batch') {
+    return <BatchFlowMaker onBack={handleBack} />;
+  }
+
+  if (mode === 'classic') {
+    return <ClassicEditor onBack={handleBack} />;
+  }
+
+  // Landing page for mode selection
+  return <LandingPage onSelectMode={handleSelectMode} />;
 }
 
 export default App;

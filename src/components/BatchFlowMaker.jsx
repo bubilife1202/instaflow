@@ -1319,7 +1319,7 @@ export default function BatchFlowMaker({ onBack }) {
     return new Blob([u8arr], { type: mime });
   };
 
-  // Download all slides - optimized for speed
+  // Download all slides - optimized for smooth UX (sequential processing)
   const downloadAll = async () => {
     setIsDownloading(true);
     const totalSlides = Object.keys(contentData).length;
@@ -1328,53 +1328,63 @@ export default function BatchFlowMaker({ onBack }) {
     const zip = new JSZip();
 
     try {
+      // Wait for fonts to be ready
       await document.fonts.ready;
-      await new Promise(r => setTimeout(r, 50)); // Brief wait for fonts
+      await new Promise(r => setTimeout(r, 100)); // Initial breathing time
 
-      // Process all slides in parallel for maximum speed
-      const capturePromises = [];
+      // Sequential processing - one slide at a time to prevent browser freeze
       for (let i = 0; i < totalSlides; i++) {
-        if (!slideRefs.current[i]) continue;
+        const node = slideRefs.current[i];
+        if (!node) continue;
 
-        capturePromises.push(
-          (async (index) => {
-            try {
-              const node = slideRefs.current[index];
-              // Hidden slides are already 1080px wide, use pixelRatio 1
-              const dataUrl = await toPng(node, {
-                quality: 1,
-                pixelRatio: 1,
-              });
-              const blob = dataURLtoBlob(dataUrl);
-              return { index, blob };
-            } catch (err) {
-              console.error(`Error capturing slide ${index + 1}:`, err);
-              return null;
-            }
-          })(i)
-        );
+        // Update progress BEFORE processing (shows "처리 중 1/6")
+        setDownloadProgress({ current: i + 1, total: totalSlides });
+
+        // UI breathing time - let browser render progress indicator
+        await new Promise(r => setTimeout(r, 100));
+
+        try {
+          // Capture slide with pixelRatio 2 for retina/mobile display
+          const dataUrl = await toPng(node, {
+            quality: 1,
+            pixelRatio: 2, // 2160x2160 or 2160x2700 for crisp mobile display
+            cacheBust: true, // Prevent caching issues
+          });
+
+          // Convert to blob and add to ZIP
+          const blob = dataURLtoBlob(dataUrl);
+          zip.file(`slide-${String(i + 1).padStart(2, '0')}.png`, blob);
+
+        } catch (err) {
+          console.error(`Error capturing slide ${i + 1}:`, err);
+        }
+
+        // Additional breathing time after each capture
+        await new Promise(r => setTimeout(r, 50));
       }
 
-      // Wait for all captures to complete
-      const results = await Promise.all(capturePromises);
-      setDownloadProgress({ current: totalSlides, total: totalSlides });
-
-      // Add successful results to ZIP
-      results.forEach(result => {
-        if (result && result.blob) {
-          zip.file(`slide-${String(result.index + 1).padStart(2, '0')}.png`, result.blob);
-        }
-      });
+      // Generate ZIP file
+      setDownloadProgress({ current: totalSlides, total: totalSlides, status: 'zipping' });
+      await new Promise(r => setTimeout(r, 100)); // Let UI update
 
       const title = contentData[0]?.title || 'instaflow';
       const safeTitle = title.replace(/[^a-zA-Z0-9가-힣]/g, '_').substring(0, 30);
       const filename = `${safeTitle}_InstaFlow.zip`;
 
-      const content = await zip.generateAsync({ type: 'blob' });
+      const content = await zip.generateAsync({
+        type: 'blob',
+        compression: 'DEFLATE',
+        compressionOptions: { level: 6 }
+      });
+
+      // Trigger download
       const link = document.createElement('a');
       link.href = URL.createObjectURL(content);
       link.download = filename;
       link.click();
+
+      // Cleanup
+      URL.revokeObjectURL(link.href);
 
     } catch (err) {
       console.error('Download error:', err);
@@ -1459,8 +1469,20 @@ export default function BatchFlowMaker({ onBack }) {
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-violet-400 via-purple-400 to-fuchsia-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                     <span className="relative flex items-center gap-2">
-                      <Sparkles className="w-4 h-4" />
-                      {isDownloading ? `${downloadProgress?.current || 0}/${downloadProgress?.total || 0}` : '다운로드'}
+                      {isDownloading ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          {downloadProgress?.status === 'zipping'
+                            ? '압축 중...'
+                            : `처리 중 ${downloadProgress?.current || 0}/${downloadProgress?.total || 0}`
+                          }
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4" />
+                          다운로드
+                        </>
+                      )}
                     </span>
                   </button>
                 </>

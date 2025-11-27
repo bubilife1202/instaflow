@@ -33,6 +33,64 @@ function MiniSlidePreview({ slideData, themePack, aspectRatio }) {
 
   const accentColor = styles.accentColor || styles.titleColor;
 
+  // Get the main text content from slideData based on type
+  const getMainText = () => {
+    switch (slideType) {
+      case 'cover': return slideData?.title || '제목';
+      case 'item': return slideData?.itemTitle || '항목';
+      case 'step': return slideData?.stepTitle || '단계';
+      case 'question': return slideData?.questionText || '질문';
+      case 'answer': return slideData?.answerText || '답변';
+      case 'cta': return slideData?.ctaText || 'CTA';
+      case 'quote': return slideData?.quoteText || '명언';
+      case 'intro': return slideData?.introText || '인트로';
+      case 'body': return slideData?.bodyText || '본문';
+      case 'climax': return slideData?.climaxText || '클라이맥스';
+      case 'result': return slideData?.resultText || '결과';
+      case 'benefit': return slideData?.benefitTitle || '혜택';
+      case 'detail': return slideData?.detailText || '상세';
+      case 'howto': return slideData?.howtoSteps || '방법';
+      case 'specs': return slideData?.specList || '스펙';
+      case 'pros': return slideData?.prosList || '장점';
+      case 'cons': return slideData?.consList || '단점';
+      case 'verdict': return slideData?.verdictText || '결론';
+      case 'hint': return slideData?.hintText || '힌트';
+      case 'explanation': return slideData?.explanationText || '설명';
+      case 'insight': return slideData?.insightText || '인사이트';
+      case 'action': return slideData?.actionList || '액션';
+      case 'process': return slideData?.processText || '과정';
+      case 'before': return slideData?.beforeTitle || '이전';
+      case 'after': return slideData?.afterTitle || '이후';
+      default:
+        // Try to find any text content
+        const textFields = Object.entries(slideData || {}).find(
+          ([k, v]) => typeof v === 'string' && v && !['type', 'number', 'image', 'objectImage'].includes(k)
+        );
+        return textFields ? textFields[1] : slideType;
+    }
+  };
+
+  // Get icon/badge for the slide type
+  const getIcon = () => {
+    switch (slideType) {
+      case 'question': return '?';
+      case 'answer': return '💡';
+      case 'quote': return '"';
+      case 'hint': return '💡';
+      case 'pros': return '👍';
+      case 'cons': return '👎';
+      case 'before': return '⬅';
+      case 'after': return '➡';
+      case 'result': return '🎯';
+      case 'insight': return '✨';
+      default: return null;
+    }
+  };
+
+  const mainText = getMainText();
+  const icon = getIcon();
+  const hasNumber = ['item', 'step'].includes(slideType) && slideData?.number;
+
   return (
     <div
       className="w-full h-full flex flex-col items-center justify-center text-center relative overflow-hidden"
@@ -55,18 +113,18 @@ function MiniSlidePreview({ slideData, themePack, aspectRatio }) {
       {/* Object image thumbnail */}
       {slideData?.objectImage && (
         <div
-          className="absolute w-4 h-4 rounded bg-cover bg-center z-10"
+          className="absolute w-4 h-4 rounded bg-cover bg-center z-10 shadow"
           style={{
             backgroundImage: `url(${slideData.objectImage})`,
-            top: '15%',
+            top: '12%',
             left: '50%',
             transform: 'translateX(-50%)'
           }}
         />
       )}
 
-      <div className="relative z-10 p-1 flex flex-col items-center justify-center">
-        {/* Cover */}
+      <div className="relative z-10 p-1 flex flex-col items-center justify-center w-full">
+        {/* Cover slide */}
         {slideType === 'cover' && (
           <>
             <div className="w-4 h-0.5 rounded-full mb-0.5" style={{ background: accentColor, opacity: 0.5 }} />
@@ -74,74 +132,53 @@ function MiniSlidePreview({ slideData, themePack, aspectRatio }) {
               className="text-[6px] font-black leading-tight text-center px-0.5 line-clamp-2"
               style={{ color: slideData?.image ? '#fff' : styles.titleColor }}
             >
-              {slideData?.title || '제목'}
+              {mainText}
             </div>
           </>
         )}
 
-        {/* Item/Step */}
-        {(slideType === 'item' || slideType === 'step') && (
-          <>
-            {!slideData?.objectImage && (
-              <div
-                className="w-3 h-3 rounded text-[5px] font-bold flex items-center justify-center mb-0.5"
-                style={{ background: styles.numberBg, color: styles.numberColor }}
-              >
-                {slideData?.number || '1'}
-              </div>
-            )}
-            <div
-              className="text-[5px] font-bold leading-tight text-center line-clamp-2"
-              style={{ color: styles.titleColor }}
-            >
-              {slideData?.itemTitle || slideData?.stepTitle || '제목'}
-            </div>
-          </>
+        {/* Number badge slides (item/step) */}
+        {hasNumber && !slideData?.objectImage && (
+          <div
+            className="w-3 h-3 rounded text-[5px] font-bold flex items-center justify-center mb-0.5"
+            style={{ background: styles.numberBg, color: styles.numberColor }}
+          >
+            {slideData.number}
+          </div>
         )}
 
-        {/* Question */}
-        {slideType === 'question' && (
-          <>
-            {!slideData?.objectImage && (
-              <div
-                className="w-3 h-3 rounded-full text-[6px] font-bold flex items-center justify-center mb-0.5"
-                style={{ background: `${accentColor}30`, color: accentColor }}
-              >
-                ?
-              </div>
-            )}
-            <div
-              className="text-[5px] font-bold leading-tight text-center line-clamp-2"
-              style={{ color: styles.titleColor }}
-            >
-              {slideData?.questionText || '질문'}
-            </div>
-          </>
+        {/* Icon badge slides */}
+        {icon && !hasNumber && !slideData?.objectImage && slideType !== 'cover' && (
+          <div
+            className="w-3 h-3 rounded-full text-[6px] font-bold flex items-center justify-center mb-0.5"
+            style={{
+              background: slideType === 'quote' ? 'transparent' : `${accentColor}30`,
+              color: accentColor,
+              opacity: slideType === 'quote' ? 0.5 : 1
+            }}
+          >
+            {icon}
+          </div>
         )}
 
-        {/* Answer */}
-        {slideType === 'answer' && (
-          <>
-            {!slideData?.objectImage && (
-              <div className="text-[8px] mb-0.5">💡</div>
-            )}
-            <div
-              className="text-[5px] font-bold leading-tight text-center line-clamp-2"
-              style={{ color: styles.titleColor }}
-            >
-              {slideData?.answerText || '답변'}
-            </div>
-          </>
+        {/* Main text for non-cover slides */}
+        {slideType !== 'cover' && slideType !== 'cta' && (
+          <div
+            className="text-[5px] font-bold leading-tight text-center line-clamp-2 px-0.5"
+            style={{ color: styles.titleColor }}
+          >
+            {mainText}
+          </div>
         )}
 
-        {/* CTA */}
+        {/* CTA slide */}
         {slideType === 'cta' && (
           <>
             <div
-              className="text-[5px] font-bold leading-tight text-center mb-0.5 line-clamp-1"
+              className="text-[5px] font-bold leading-tight text-center mb-0.5 line-clamp-1 px-0.5"
               style={{ color: styles.titleColor }}
             >
-              {slideData?.ctaText || 'CTA'}
+              {mainText}
             </div>
             <div
               className="text-[4px] px-1 py-0.5 rounded-full font-bold"
@@ -151,30 +188,17 @@ function MiniSlidePreview({ slideData, themePack, aspectRatio }) {
             </div>
           </>
         )}
-
-        {/* Quote */}
-        {slideType === 'quote' && (
-          <>
-            <div className="text-[8px] leading-none" style={{ color: accentColor, opacity: 0.5 }}>"</div>
-            <div
-              className="text-[5px] italic leading-tight text-center line-clamp-2"
-              style={{ color: styles.titleColor }}
-            >
-              {slideData?.quoteText || '명언'}
-            </div>
-          </>
-        )}
-
-        {/* Fallback */}
-        {!['cover', 'item', 'step', 'question', 'answer', 'cta', 'quote'].includes(slideType) && (
-          <div
-            className="text-[5px] font-bold text-center line-clamp-2"
-            style={{ color: styles.titleColor }}
-          >
-            {slideType}
-          </div>
-        )}
       </div>
+
+      {/* Slide number indicator at bottom */}
+      {slideData?.number && !['item', 'step'].includes(slideType) && (
+        <div
+          className="absolute bottom-0.5 right-0.5 text-[4px] font-bold opacity-40"
+          style={{ color: styles.titleColor }}
+        >
+          {slideData.number}
+        </div>
+      )}
     </div>
   );
 }
@@ -383,6 +407,46 @@ function TemplatePreviewCard({ structure, themePack, onClick }) {
   const slideType = currentSlide.type || 'cover';
   const slideStyles = slideType === 'cover' ? themePack.cover : slideType === 'cta' ? themePack.cta : themePack.body;
 
+  // Get display content based on slide type
+  const getSlideContent = () => {
+    switch (slideType) {
+      case 'cover':
+        return { title: currentSlide.title || structure.name, subtitle: currentSlide.subtitle };
+      case 'item':
+        return { number: currentSlide.number, title: currentSlide.itemTitle };
+      case 'step':
+        return { number: currentSlide.number, title: currentSlide.stepTitle, label: 'STEP' };
+      case 'question':
+        return { icon: '?', title: currentSlide.questionText };
+      case 'answer':
+        return { icon: '💡', title: currentSlide.answerText };
+      case 'quote':
+        return { icon: '"', title: currentSlide.quoteText, isItalic: true };
+      case 'cta':
+        return { title: currentSlide.ctaText, button: currentSlide.ctaAction };
+      case 'before':
+        return { icon: '⬅', title: currentSlide.beforeTitle || '이전' };
+      case 'after':
+        return { icon: '➡', title: currentSlide.afterTitle || '이후' };
+      case 'pros':
+        return { icon: '👍', title: currentSlide.prosList || '장점' };
+      case 'cons':
+        return { icon: '👎', title: currentSlide.consList || '단점' };
+      case 'result':
+        return { icon: '🎯', title: currentSlide.resultText || '결과' };
+      case 'insight':
+        return { icon: '✨', title: currentSlide.insightText || '인사이트' };
+      default:
+        // Find any text field
+        const textField = Object.entries(currentSlide).find(
+          ([k, v]) => typeof v === 'string' && v && !['type', 'number'].includes(k)
+        );
+        return { title: textField ? textField[1] : slideType };
+    }
+  };
+
+  const content = getSlideContent();
+
   return (
     <button
       onClick={onClick}
@@ -392,34 +456,77 @@ function TemplatePreviewCard({ structure, themePack, onClick }) {
     >
       <div className="aspect-[4/5] relative overflow-hidden" style={{ background: slideStyles.background }}>
         <div className="absolute inset-0 flex flex-col items-center justify-center p-3 text-center">
+          {/* Cover slide */}
           {slideType === 'cover' && (
             <>
               <div className="text-[10px] font-black leading-tight mb-1 break-keep text-balance px-2" style={{ color: slideStyles.titleColor }}>
-                {currentSlide.title || structure.name}
+                {content.title}
               </div>
-              {currentSlide.subtitle && (
-                <div className="text-[7px] opacity-80" style={{ color: slideStyles.subtitleColor }}>{currentSlide.subtitle}</div>
+              {content.subtitle && (
+                <div className="text-[7px] opacity-80" style={{ color: slideStyles.subtitleColor }}>{content.subtitle}</div>
               )}
             </>
           )}
+
+          {/* Numbered slides (item/step) */}
           {(slideType === 'item' || slideType === 'step') && (
             <>
-              <div className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold mb-1" style={{ background: slideStyles.numberBg, color: slideStyles.numberColor }}>
-                {currentSlide.number}
-              </div>
+              {content.label && (
+                <div className="text-[6px] font-bold tracking-wider mb-0.5" style={{ color: slideStyles.accentColor || slideStyles.titleColor }}>
+                  {content.label} {content.number}
+                </div>
+              )}
+              {!content.label && (
+                <div className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold mb-1" style={{ background: slideStyles.numberBg, color: slideStyles.numberColor }}>
+                  {content.number}
+                </div>
+              )}
               <div className="text-[9px] font-bold leading-tight break-keep" style={{ color: slideStyles.titleColor }}>
-                {currentSlide.itemTitle || currentSlide.stepTitle}
+                {content.title}
               </div>
             </>
           )}
-          {slideType === 'question' && (
-            <div className="text-[8px] font-bold leading-tight break-keep px-2" style={{ color: slideStyles.titleColor }}>
-              {currentSlide.questionText}
-            </div>
+
+          {/* Icon-based slides */}
+          {content.icon && !['cover', 'item', 'step', 'cta'].includes(slideType) && (
+            <>
+              <div
+                className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold mb-1"
+                style={{
+                  background: slideType === 'quote' ? 'transparent' : `${slideStyles.accentColor || slideStyles.titleColor}20`,
+                  color: slideStyles.accentColor || slideStyles.titleColor,
+                  opacity: slideType === 'quote' ? 0.5 : 1
+                }}
+              >
+                {content.icon}
+              </div>
+              <div
+                className={`text-[8px] font-bold leading-tight break-keep px-2 ${content.isItalic ? 'italic' : ''}`}
+                style={{ color: slideStyles.titleColor }}
+              >
+                {content.title}
+              </div>
+            </>
           )}
+
+          {/* CTA slide */}
           {slideType === 'cta' && (
-            <div className="text-[6px] px-2 py-0.5 rounded-full font-bold" style={{ background: slideStyles.buttonBg, color: slideStyles.buttonColor }}>
-              {currentSlide.ctaAction}
+            <>
+              {content.title && (
+                <div className="text-[8px] font-bold leading-tight mb-1.5 break-keep" style={{ color: slideStyles.titleColor }}>
+                  {content.title}
+                </div>
+              )}
+              <div className="text-[6px] px-2 py-0.5 rounded-full font-bold" style={{ background: slideStyles.buttonBg, color: slideStyles.buttonColor }}>
+                {content.button || '버튼'}
+              </div>
+            </>
+          )}
+
+          {/* Generic fallback */}
+          {!content.icon && !['cover', 'item', 'step', 'cta'].includes(slideType) && (
+            <div className="text-[8px] font-bold leading-tight break-keep px-2" style={{ color: slideStyles.titleColor }}>
+              {content.title}
             </div>
           )}
         </div>

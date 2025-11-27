@@ -129,7 +129,7 @@ function MiniSlidePreview({ slideData, themePack, aspectRatio }) {
           <>
             <div className="w-4 h-0.5 rounded-full mb-0.5" style={{ background: accentColor, opacity: 0.5 }} />
             <div
-              className="text-[6px] font-black leading-tight text-center px-0.5 line-clamp-2"
+              className="text-[6px] font-black leading-tight text-center px-0.5 line-clamp-2 break-keep"
               style={{ color: slideData?.image ? '#fff' : styles.titleColor }}
             >
               {mainText}
@@ -164,7 +164,7 @@ function MiniSlidePreview({ slideData, themePack, aspectRatio }) {
         {/* Main text for non-cover slides */}
         {slideType !== 'cover' && slideType !== 'cta' && (
           <div
-            className="text-[5px] font-bold leading-tight text-center line-clamp-2 px-0.5"
+            className="text-[5px] font-bold leading-tight text-center line-clamp-2 px-0.5 break-keep"
             style={{ color: styles.titleColor }}
           >
             {mainText}
@@ -175,13 +175,13 @@ function MiniSlidePreview({ slideData, themePack, aspectRatio }) {
         {slideType === 'cta' && (
           <>
             <div
-              className="text-[5px] font-bold leading-tight text-center mb-0.5 line-clamp-1 px-0.5"
+              className="text-[5px] font-bold leading-tight text-center mb-0.5 line-clamp-1 px-0.5 break-keep"
               style={{ color: styles.titleColor }}
             >
               {mainText}
             </div>
             <div
-              className="text-[4px] px-1 py-0.5 rounded-full font-bold"
+              className="text-[4px] px-1 py-0.5 rounded-full font-bold break-keep"
               style={{ background: styles.buttonBg, color: styles.buttonColor }}
             >
               {slideData?.ctaAction || '버튼'}
@@ -463,7 +463,7 @@ function TemplatePreviewCard({ structure, themePack, onClick }) {
                 {content.title}
               </div>
               {content.subtitle && (
-                <div className="text-[7px] opacity-80" style={{ color: slideStyles.subtitleColor }}>{content.subtitle}</div>
+                <div className="text-[7px] opacity-80 break-keep" style={{ color: slideStyles.subtitleColor }}>{content.subtitle}</div>
               )}
             </>
           )}
@@ -472,7 +472,7 @@ function TemplatePreviewCard({ structure, themePack, onClick }) {
           {(slideType === 'item' || slideType === 'step') && (
             <>
               {content.label && (
-                <div className="text-[6px] font-bold tracking-wider mb-0.5" style={{ color: slideStyles.accentColor || slideStyles.titleColor }}>
+                <div className="text-[6px] font-bold tracking-wider mb-0.5 break-keep" style={{ color: slideStyles.accentColor || slideStyles.titleColor }}>
                   {content.label} {content.number}
                 </div>
               )}
@@ -481,7 +481,7 @@ function TemplatePreviewCard({ structure, themePack, onClick }) {
                   {content.number}
                 </div>
               )}
-              <div className="text-[9px] font-bold leading-tight break-keep" style={{ color: slideStyles.titleColor }}>
+              <div className="text-[9px] font-bold leading-tight break-keep text-balance" style={{ color: slideStyles.titleColor }}>
                 {content.title}
               </div>
             </>
@@ -501,7 +501,7 @@ function TemplatePreviewCard({ structure, themePack, onClick }) {
                 {content.icon}
               </div>
               <div
-                className={`text-[8px] font-bold leading-tight break-keep px-2 ${content.isItalic ? 'italic' : ''}`}
+                className={`text-[8px] font-bold leading-tight break-keep text-balance px-2 ${content.isItalic ? 'italic' : ''}`}
                 style={{ color: slideStyles.titleColor }}
               >
                 {content.title}
@@ -513,11 +513,11 @@ function TemplatePreviewCard({ structure, themePack, onClick }) {
           {slideType === 'cta' && (
             <>
               {content.title && (
-                <div className="text-[8px] font-bold leading-tight mb-1.5 break-keep" style={{ color: slideStyles.titleColor }}>
+                <div className="text-[8px] font-bold leading-tight mb-1.5 break-keep text-balance" style={{ color: slideStyles.titleColor }}>
                   {content.title}
                 </div>
               )}
-              <div className="text-[6px] px-2 py-0.5 rounded-full font-bold" style={{ background: slideStyles.buttonBg, color: slideStyles.buttonColor }}>
+              <div className="text-[6px] px-2 py-0.5 rounded-full font-bold break-keep" style={{ background: slideStyles.buttonBg, color: slideStyles.buttonColor }}>
                 {content.button || '버튼'}
               </div>
             </>
@@ -525,7 +525,7 @@ function TemplatePreviewCard({ structure, themePack, onClick }) {
 
           {/* Generic fallback */}
           {!content.icon && !['cover', 'item', 'step', 'cta'].includes(slideType) && (
-            <div className="text-[8px] font-bold leading-tight break-keep px-2" style={{ color: slideStyles.titleColor }}>
+            <div className="text-[8px] font-bold leading-tight break-keep text-balance px-2" style={{ color: slideStyles.titleColor }}>
               {content.title}
             </div>
           )}
@@ -1203,7 +1203,7 @@ export default function BatchFlowMaker({ onBack }) {
               {slideData.quoteAuthor && (
                 <div className="flex items-center gap-3 mt-4">
                   <div className="w-8 h-px" style={{ background: accentColor, opacity: 0.5 }} />
-                  <p className={`${smallSize} font-medium tracking-wide`} style={{ color: styles.textColor, opacity: 0.8 }}>
+                  <p className={`${smallSize} font-medium tracking-wide break-keep`} style={{ color: styles.textColor, opacity: 0.8 }}>
                     {slideData.quoteAuthor}
                   </p>
                   <div className="w-8 h-px" style={{ background: accentColor, opacity: 0.5 }} />
@@ -1262,7 +1262,7 @@ export default function BatchFlowMaker({ onBack }) {
 
               {/* CTA Button */}
               <div
-                className={`${buttonPadding} rounded-full font-bold shadow-lg`}
+                className={`${buttonPadding} rounded-full font-bold shadow-lg break-keep`}
                 style={{ background: styles.buttonBg, color: styles.buttonColor, boxShadow: `0 8px 30px ${typeof styles.buttonBg === 'string' && styles.buttonBg.includes('gradient') ? 'rgba(0,0,0,0.3)' : styles.buttonBg + '50'}` }}
               >
                 {slideData.ctaAction || '팔로우하기'}
@@ -1296,7 +1296,7 @@ export default function BatchFlowMaker({ onBack }) {
         {/* Instagram ID watermark - improved positioning */}
         {instagramId && (
           <div
-            className={`absolute bottom-3 right-4 ${isDownload ? 'text-sm' : 'text-[10px]'} font-medium tracking-wide`}
+            className={`absolute bottom-3 right-4 ${isDownload ? 'text-sm' : 'text-[10px]'} font-medium tracking-wide break-keep`}
             style={{ color: styles.textColor || styles.titleColor, opacity: 0.4 }}
           >
             {instagramId}

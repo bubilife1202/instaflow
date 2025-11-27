@@ -29,6 +29,191 @@ import {
 } from '../services/geminiAI';
 
 /**
+ * TemplatePreviewCard - Shows actual card news preview with hover animation
+ */
+function TemplatePreviewCard({ structure, themePack, onClick }) {
+  const [hoverIndex, setHoverIndex] = useState(0);
+  const [isHovering, setIsHovering] = useState(false);
+  const intervalRef = useRef(null);
+
+  // Get example content for preview
+  const exampleContent = structure.exampleContent || [];
+  const coverContent = exampleContent[0] || { title: structure.name, subtitle: structure.description };
+
+  // Auto-cycle slides on hover
+  useEffect(() => {
+    if (isHovering && exampleContent.length > 1) {
+      intervalRef.current = setInterval(() => {
+        setHoverIndex(prev => (prev + 1) % Math.min(exampleContent.length, 4));
+      }, 1200);
+    } else {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+      setHoverIndex(0);
+    }
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [isHovering, exampleContent.length]);
+
+  const styles = themePack.cover;
+  const currentSlide = exampleContent[hoverIndex] || coverContent;
+  const slideType = currentSlide.type || 'cover';
+
+  // Get styles based on slide type
+  const getSlideStyles = () => {
+    if (slideType === 'cover') return themePack.cover;
+    if (slideType === 'cta') return themePack.cta;
+    return themePack.body;
+  };
+
+  const slideStyles = getSlideStyles();
+
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
+      className="group relative bg-white/5 border border-white/10 rounded-xl overflow-hidden text-left hover:border-purple-500/50 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-purple-500/10"
+    >
+      {/* Mini Preview Card */}
+      <div
+        className="aspect-[4/5] relative overflow-hidden"
+        style={{ background: slideStyles.background }}
+      >
+        {/* Slide content */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-3 text-center transition-all duration-500">
+          {/* Cover slide */}
+          {slideType === 'cover' && (
+            <>
+              <div
+                className="text-[10px] font-black leading-tight mb-1 break-keep text-balance px-2"
+                style={{ color: slideStyles.titleColor }}
+              >
+                {currentSlide.title || structure.name}
+              </div>
+              {currentSlide.subtitle && (
+                <div
+                  className="text-[7px] opacity-80"
+                  style={{ color: slideStyles.subtitleColor }}
+                >
+                  {currentSlide.subtitle}
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Item/Step slide */}
+          {(slideType === 'item' || slideType === 'step') && (
+            <>
+              <div
+                className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold mb-1"
+                style={{ background: slideStyles.numberBg, color: slideStyles.numberColor }}
+              >
+                {currentSlide.number}
+              </div>
+              <div
+                className="text-[9px] font-bold leading-tight break-keep"
+                style={{ color: slideStyles.titleColor }}
+              >
+                {currentSlide.itemTitle || currentSlide.stepTitle}
+              </div>
+            </>
+          )}
+
+          {/* Question slide */}
+          {slideType === 'question' && (
+            <>
+              <div
+                className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold mb-1"
+                style={{ background: `${slideStyles.accentColor || slideStyles.titleColor}20`, color: slideStyles.accentColor || slideStyles.titleColor }}
+              >
+                ?
+              </div>
+              <div
+                className="text-[8px] font-bold leading-tight break-keep px-2"
+                style={{ color: slideStyles.titleColor }}
+              >
+                {currentSlide.questionText}
+              </div>
+            </>
+          )}
+
+          {/* Answer slide */}
+          {slideType === 'answer' && (
+            <>
+              <div className="text-[10px] mb-1">💡</div>
+              <div
+                className="text-[8px] font-bold leading-tight break-keep"
+                style={{ color: slideStyles.titleColor }}
+              >
+                {currentSlide.answerText}
+              </div>
+            </>
+          )}
+
+          {/* CTA slide */}
+          {slideType === 'cta' && (
+            <>
+              <div
+                className="text-[8px] font-bold leading-tight mb-1 break-keep"
+                style={{ color: slideStyles.titleColor }}
+              >
+                {currentSlide.ctaText}
+              </div>
+              <div
+                className="text-[6px] px-2 py-0.5 rounded-full font-bold"
+                style={{ background: slideStyles.buttonBg, color: slideStyles.buttonColor }}
+              >
+                {currentSlide.ctaAction}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Slide indicator dots */}
+        {isHovering && exampleContent.length > 1 && (
+          <div className="absolute bottom-1.5 left-0 right-0 flex justify-center gap-0.5">
+            {exampleContent.slice(0, 4).map((_, i) => (
+              <div
+                key={i}
+                className={`w-1 h-1 rounded-full transition-all ${
+                  i === hoverIndex ? 'bg-white scale-125' : 'bg-white/40'
+                }`}
+              />
+            ))}
+            {exampleContent.length > 4 && (
+              <div className="text-[6px] text-white/60 ml-0.5">+{exampleContent.length - 4}</div>
+            )}
+          </div>
+        )}
+
+        {/* Hover overlay with icon */}
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center">
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="text-2xl">{structure.icon}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Info section */}
+      <div className="p-2.5 bg-black/20">
+        <div className="flex items-center gap-1.5 mb-0.5">
+          <span className="text-lg">{structure.icon}</span>
+          <h3 className="text-xs font-bold text-white truncate">{structure.name}</h3>
+        </div>
+        <p className="text-[10px] text-white/50 line-clamp-1">{structure.description}</p>
+        <div className="flex items-center justify-between mt-1.5">
+          <span className="text-[10px] text-purple-400 font-medium">{structure.slides.length}장</span>
+          <span className="text-[9px] text-white/30 group-hover:text-purple-400 transition-colors">클릭하여 시작 →</span>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+/**
  * BatchFlowMaker - One-click card news generator
  * Step 1: Select structure
  * Step 2: Left=Input Form, Right=Theme+Preview (simultaneous)
@@ -1000,18 +1185,14 @@ export default function BatchFlowMaker({ onBack }) {
             </div>
 
             {/* Structure Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {filteredStructures.map(structure => (
-                <button
+                <TemplatePreviewCard
                   key={structure.id}
+                  structure={structure}
+                  themePack={THEME_PACKS[structure.defaultTheme] || THEME_PACKS['modernMinimal']}
                   onClick={() => handleSelectStructure(structure)}
-                  className="group p-4 bg-white/5 border border-white/10 rounded-xl text-left hover:bg-white/10 hover:border-purple-500/50 transition-all duration-300 hover:scale-[1.02]"
-                >
-                  <div className="text-3xl mb-2">{structure.icon}</div>
-                  <h3 className="text-sm font-bold text-white mb-1">{structure.name}</h3>
-                  <p className="text-xs text-white/50 mb-2 line-clamp-2">{structure.description}</p>
-                  <div className="text-xs text-purple-400">{structure.slides.length}장</div>
-                </button>
+                />
               ))}
             </div>
           </div>
@@ -1415,17 +1596,43 @@ export default function BatchFlowMaker({ onBack }) {
                   </span>
                 </div>
 
-                {/* Main Preview */}
+                {/* Main Preview - Smartphone Frame */}
                 <div className="flex-1 flex items-center justify-center">
-                  <div
-                    className="rounded-xl overflow-hidden shadow-2xl"
-                    style={{
-                      width: '100%',
-                      maxWidth: '280px',
-                      aspectRatio: aspectRatio === '1:1' ? '1/1' : '4/5'
-                    }}
-                  >
-                    {contentData[previewIndex] && renderSlidePreview(contentData[previewIndex], previewIndex)}
+                  {/* Smartphone Frame */}
+                  <div className="relative">
+                    {/* Phone outer frame */}
+                    <div className="bg-gradient-to-b from-gray-800 to-gray-900 rounded-[2.5rem] p-2 shadow-2xl shadow-black/50">
+                      {/* Phone inner bezel */}
+                      <div className="bg-black rounded-[2rem] p-1.5 relative">
+                        {/* Dynamic Island / Notch */}
+                        <div className="absolute top-3 left-1/2 -translate-x-1/2 w-20 h-5 bg-black rounded-full z-20 flex items-center justify-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-gray-800" />
+                          <div className="w-8 h-2 rounded-full bg-gray-800" />
+                        </div>
+
+                        {/* Screen */}
+                        <div
+                          className="rounded-[1.5rem] overflow-hidden bg-gray-900"
+                          style={{
+                            width: '240px',
+                            aspectRatio: aspectRatio === '1:1' ? '1/1' : '4/5'
+                          }}
+                        >
+                          {contentData[previewIndex] && renderSlidePreview(contentData[previewIndex], previewIndex)}
+                        </div>
+
+                        {/* Home indicator */}
+                        <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-24 h-1 bg-white/30 rounded-full" />
+                      </div>
+                    </div>
+
+                    {/* Reflection effect */}
+                    <div className="absolute inset-0 rounded-[2.5rem] bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
+
+                    {/* Side buttons */}
+                    <div className="absolute -left-1 top-24 w-1 h-8 bg-gray-700 rounded-l" />
+                    <div className="absolute -left-1 top-36 w-1 h-12 bg-gray-700 rounded-l" />
+                    <div className="absolute -right-1 top-28 w-1 h-16 bg-gray-700 rounded-r" />
                   </div>
                 </div>
 

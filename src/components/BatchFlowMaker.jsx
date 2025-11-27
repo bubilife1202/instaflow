@@ -65,6 +65,7 @@ export default function BatchFlowMaker({ onBack }) {
 
   // Refs for image upload
   const imageInputRefs = useRef({});
+  const objectImageInputRefs = useRef({});
 
   // Save instagram ID
   useEffect(() => {
@@ -164,12 +165,36 @@ export default function BatchFlowMaker({ onBack }) {
     }
   };
 
+  // Handle object image upload for a slide (image as object, not background)
+  const handleObjectImageUpload = (slideIndex, event) => {
+    const file = event.target.files[0];
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        updateContent(slideIndex, 'objectImage', e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   // Remove image from a slide
   const removeImage = (slideIndex) => {
     setContentData(prev => {
       const newData = { ...prev };
       if (newData[slideIndex]) {
         const { image, ...rest } = newData[slideIndex];
+        newData[slideIndex] = rest;
+      }
+      return newData;
+    });
+  };
+
+  // Remove object image from a slide
+  const removeObjectImage = (slideIndex) => {
+    setContentData(prev => {
+      const newData = { ...prev };
+      if (newData[slideIndex]) {
+        const { objectImage, ...rest } = newData[slideIndex];
         newData[slideIndex] = rest;
       }
       return newData;
@@ -354,15 +379,28 @@ export default function BatchFlowMaker({ onBack }) {
             {!slideData.image && <DecoLines color={accentColor} opacity={0.2} />}
 
             <div className="relative z-10 px-8 py-6 flex flex-col items-center justify-center h-full">
-              {/* Top accent line */}
-              <div
-                className="w-16 h-1 rounded-full mb-6"
-                style={{ background: slideData.image ? '#ffffff' : accentColor }}
-              />
+              {/* Object Image */}
+              {slideData.objectImage && (
+                <div
+                  className={`${imageSize} rounded-2xl mb-4 bg-cover bg-center shadow-xl`}
+                  style={{
+                    backgroundImage: `url(${slideData.objectImage})`,
+                    boxShadow: `0 8px 32px ${accentColor}30`
+                  }}
+                />
+              )}
+
+              {/* Top accent line - only show if no object image */}
+              {!slideData.objectImage && (
+                <div
+                  className="w-16 h-1 rounded-full mb-6"
+                  style={{ background: slideData.image ? '#ffffff' : accentColor }}
+                />
+              )}
 
               {/* Main title with enhanced typography */}
               <h1
-                className={`${titleSize} font-black mb-4 leading-tight tracking-tight`}
+                className={`${titleSize} font-black mb-4 leading-tight tracking-tight break-keep text-balance`}
                 style={{
                   color: slideData.image ? '#ffffff' : styles.titleColor,
                   textShadow: slideData.image ? '0 2px 20px rgba(0,0,0,0.5)' : (styles.glow ? `0 0 30px ${styles.titleColor}40` : 'none')
@@ -375,7 +413,7 @@ export default function BatchFlowMaker({ onBack }) {
               <div className="flex items-center gap-3">
                 <div className="w-8 h-px" style={{ background: slideData.image ? 'rgba(255,255,255,0.5)' : styles.subtitleColor, opacity: 0.5 }} />
                 <p
-                  className={`${subtitleSize} font-medium tracking-wide`}
+                  className={`${subtitleSize} font-medium tracking-wide break-keep text-pretty`}
                   style={{ color: slideData.image ? 'rgba(255,255,255,0.9)' : styles.subtitleColor }}
                 >
                   {slideData.subtitle || '부제목'}
@@ -384,10 +422,12 @@ export default function BatchFlowMaker({ onBack }) {
               </div>
 
               {/* Bottom accent */}
-              <div
-                className="w-24 h-1 rounded-full mt-8"
-                style={{ background: slideData.image ? 'rgba(255,255,255,0.5)' : `linear-gradient(90deg, transparent, ${accentColor}, transparent)` }}
-              />
+              {!slideData.objectImage && (
+                <div
+                  className="w-24 h-1 rounded-full mt-8"
+                  style={{ background: slideData.image ? 'rgba(255,255,255,0.5)' : `linear-gradient(90deg, transparent, ${accentColor}, transparent)` }}
+                />
+              )}
             </div>
           </>
         )}
@@ -399,17 +439,28 @@ export default function BatchFlowMaker({ onBack }) {
             <DecoDots color={accentColor} opacity={0.2} />
 
             <div className="relative z-10 px-8 py-6 flex flex-col items-center justify-center h-full">
-              {/* Large number badge with gradient */}
-              <div
-                className={`${numberSize} rounded-2xl flex items-center justify-center font-black mb-6 shadow-lg`}
-                style={{
-                  background: styles.numberBg,
-                  color: styles.numberColor,
-                  boxShadow: `0 8px 32px ${accentColor}30`
-                }}
-              >
-                {slideType === 'step' ? `${slideData.number || index}` : slideData.number || index}
-              </div>
+              {/* Object Image - show at top if exists */}
+              {slideData.objectImage ? (
+                <div
+                  className={`${smallImageSize} rounded-xl mb-4 bg-cover bg-center shadow-lg`}
+                  style={{
+                    backgroundImage: `url(${slideData.objectImage})`,
+                    boxShadow: `0 6px 24px ${accentColor}25`
+                  }}
+                />
+              ) : (
+                /* Large number badge with gradient - show when no object image */
+                <div
+                  className={`${numberSize} rounded-2xl flex items-center justify-center font-black mb-6 shadow-lg`}
+                  style={{
+                    background: styles.numberBg,
+                    color: styles.numberColor,
+                    boxShadow: `0 8px 32px ${accentColor}30`
+                  }}
+                >
+                  {slideType === 'step' ? `${slideData.number || index}` : slideData.number || index}
+                </div>
+              )}
 
               {/* Step label for tutorial */}
               {slideType === 'step' && (
@@ -423,7 +474,7 @@ export default function BatchFlowMaker({ onBack }) {
 
               {/* Title with underline accent */}
               <h2
-                className={`${headingSize} font-bold mb-3 leading-tight`}
+                className={`${headingSize} font-bold mb-3 leading-tight break-keep text-balance`}
                 style={{ color: styles.titleColor }}
               >
                 {slideData.itemTitle || slideData.stepTitle || '항목 제목'}
@@ -441,7 +492,7 @@ export default function BatchFlowMaker({ onBack }) {
                 style={{ background: `${styles.highlightColor || accentColor}15` }}
               >
                 <p
-                  className={`${bodySize} leading-relaxed`}
+                  className={`${bodySize} leading-relaxed break-keep text-pretty`}
                   style={{ color: styles.textColor }}
                 >
                   {slideData.itemDescription || slideData.stepDescription || '설명을 입력하세요'}
@@ -458,21 +509,31 @@ export default function BatchFlowMaker({ onBack }) {
             <DecoWave color={accentColor} opacity={0.08} />
 
             <div className="relative z-10 px-8 py-6 flex flex-col items-center justify-center h-full">
-              {/* Question mark icon with glow */}
-              <div
-                className={`${isDownload ? 'w-20 h-20 text-5xl' : 'w-12 h-12 text-2xl'} rounded-full flex items-center justify-center mb-6 font-black`}
-                style={{
-                  background: `${accentColor}20`,
-                  color: accentColor,
-                  boxShadow: `0 0 40px ${accentColor}20`
-                }}
-              >
-                ?
-              </div>
+              {/* Object Image or Question mark icon */}
+              {slideData.objectImage ? (
+                <div
+                  className={`${smallImageSize} rounded-xl mb-5 bg-cover bg-center shadow-lg`}
+                  style={{
+                    backgroundImage: `url(${slideData.objectImage})`,
+                    boxShadow: `0 6px 24px ${accentColor}25`
+                  }}
+                />
+              ) : (
+                <div
+                  className={`${isDownload ? 'w-20 h-20 text-5xl' : 'w-12 h-12 text-2xl'} rounded-full flex items-center justify-center mb-6 font-black`}
+                  style={{
+                    background: `${accentColor}20`,
+                    color: accentColor,
+                    boxShadow: `0 0 40px ${accentColor}20`
+                  }}
+                >
+                  ?
+                </div>
+              )}
 
               {/* Question text with emphasis */}
               <h2
-                className={`${headingSize} font-bold leading-snug max-w-[90%]`}
+                className={`${headingSize} font-bold leading-snug max-w-[90%] break-keep text-balance`}
                 style={{ color: styles.titleColor }}
               >
                 {slideData.questionText || '질문을 입력하세요'}
@@ -495,17 +556,27 @@ export default function BatchFlowMaker({ onBack }) {
             <DecoLines color={accentColor} opacity={0.15} />
 
             <div className="relative z-10 px-8 py-6 flex flex-col items-center justify-center h-full">
-              {/* Lightbulb icon */}
-              <div
-                className={`${isDownload ? 'w-16 h-16 text-4xl' : 'w-10 h-10 text-xl'} rounded-full flex items-center justify-center mb-5`}
-                style={{
-                  background: `linear-gradient(135deg, ${accentColor}, ${accentColor}80)`,
-                  color: styles.numberColor || '#fff',
-                  boxShadow: `0 4px 20px ${accentColor}40`
-                }}
-              >
-                💡
-              </div>
+              {/* Object Image or Lightbulb icon */}
+              {slideData.objectImage ? (
+                <div
+                  className={`${smallImageSize} rounded-xl mb-4 bg-cover bg-center shadow-lg`}
+                  style={{
+                    backgroundImage: `url(${slideData.objectImage})`,
+                    boxShadow: `0 6px 24px ${accentColor}25`
+                  }}
+                />
+              ) : (
+                <div
+                  className={`${isDownload ? 'w-16 h-16 text-4xl' : 'w-10 h-10 text-xl'} rounded-full flex items-center justify-center mb-5`}
+                  style={{
+                    background: `linear-gradient(135deg, ${accentColor}, ${accentColor}80)`,
+                    color: styles.numberColor || '#fff',
+                    boxShadow: `0 4px 20px ${accentColor}40`
+                  }}
+                >
+                  💡
+                </div>
+              )}
 
               {/* Answer label */}
               <div
@@ -517,7 +588,7 @@ export default function BatchFlowMaker({ onBack }) {
 
               {/* Main answer */}
               <h2
-                className={`${headingSize} font-bold mb-4 leading-tight`}
+                className={`${headingSize} font-bold mb-4 leading-tight break-keep text-balance`}
                 style={{ color: styles.titleColor }}
               >
                 {slideData.answerText || '답변'}
@@ -533,7 +604,7 @@ export default function BatchFlowMaker({ onBack }) {
                   }}
                 >
                   <p
-                    className={`${bodySize} leading-relaxed`}
+                    className={`${bodySize} leading-relaxed break-keep text-pretty`}
                     style={{ color: styles.textColor }}
                   >
                     {slideData.answerDetail}
@@ -560,7 +631,7 @@ export default function BatchFlowMaker({ onBack }) {
 
               {/* Quote text */}
               <p
-                className={`${headingSize} font-medium italic leading-relaxed max-w-[85%] text-center mb-4`}
+                className={`${headingSize} font-medium italic leading-relaxed max-w-[85%] text-center mb-4 break-keep text-balance`}
                 style={{ color: styles.titleColor }}
               >
                 {slideData.quoteText || '명언을 입력하세요'}
@@ -590,16 +661,26 @@ export default function BatchFlowMaker({ onBack }) {
             <DecoGeometric color={styles.buttonBg} opacity={0.1} />
 
             <div className="relative z-10 px-8 py-6 flex flex-col items-center justify-center h-full">
-              {/* Top decorative element */}
-              <div className="flex items-center gap-2 mb-6">
-                <div className="w-3 h-3 rounded-full" style={{ background: styles.buttonBg }} />
-                <div className="w-6 h-1" style={{ background: styles.buttonBg }} />
-                <div className="w-3 h-3 rounded-full" style={{ background: styles.buttonBg }} />
-              </div>
+              {/* Object Image or Top decorative element */}
+              {slideData.objectImage ? (
+                <div
+                  className={`${smallImageSize} rounded-xl mb-5 bg-cover bg-center shadow-lg`}
+                  style={{
+                    backgroundImage: `url(${slideData.objectImage})`,
+                    boxShadow: `0 6px 24px ${typeof styles.buttonBg === 'string' ? styles.buttonBg : '#000'}25`
+                  }}
+                />
+              ) : (
+                <div className="flex items-center gap-2 mb-6">
+                  <div className="w-3 h-3 rounded-full" style={{ background: styles.buttonBg }} />
+                  <div className="w-6 h-1" style={{ background: styles.buttonBg }} />
+                  <div className="w-3 h-3 rounded-full" style={{ background: styles.buttonBg }} />
+                </div>
+              )}
 
               {/* CTA headline */}
               <h2
-                className={`${headingSize} font-black mb-6 leading-tight`}
+                className={`${headingSize} font-black mb-6 leading-tight break-keep text-balance`}
                 style={{
                   color: styles.titleColor,
                   textShadow: styles.glow ? `0 0 20px ${styles.titleColor}40` : 'none'
@@ -642,7 +723,7 @@ export default function BatchFlowMaker({ onBack }) {
                 📝
               </div>
               <p
-                className={`${headingSize} font-bold max-w-[85%]`}
+                className={`${headingSize} font-bold max-w-[85%] break-keep text-balance`}
                 style={{ color: styles.titleColor }}
               >
                 {Object.values(slideData).find(v => typeof v === 'string' && v && v !== slideType) || `${slideType} 슬라이드`}
@@ -1059,7 +1140,8 @@ export default function BatchFlowMaker({ onBack }) {
                     )}
 
                     {/* Image Upload Section */}
-                    <div className="mt-2 pt-2 border-t border-white/10">
+                    <div className="mt-2 pt-2 border-t border-white/10 space-y-2">
+                      {/* Background Image */}
                       <input
                         type="file"
                         accept="image/*"
@@ -1095,6 +1177,45 @@ export default function BatchFlowMaker({ onBack }) {
                         >
                           <ImagePlus className="w-4 h-4" />
                           배경 이미지 추가
+                        </button>
+                      )}
+
+                      {/* Object Image */}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        ref={el => objectImageInputRefs.current[index] = el}
+                        onChange={(e) => handleObjectImageUpload(index, e)}
+                        className="hidden"
+                      />
+                      {contentData[index]?.objectImage ? (
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-12 h-12 rounded bg-cover bg-center border border-purple-400/50"
+                            style={{ backgroundImage: `url(${contentData[index].objectImage})` }}
+                          />
+                          <div className="flex-1 text-xs text-purple-300">오브젝트 이미지 적용됨</div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeObjectImage(index);
+                            }}
+                            className="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded transition"
+                            title="이미지 삭제"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            objectImageInputRefs.current[index]?.click();
+                          }}
+                          className="w-full flex items-center justify-center gap-2 px-2 py-1.5 bg-purple-500/10 border border-dashed border-purple-400/30 rounded text-purple-300/70 text-xs hover:bg-purple-500/20 hover:text-purple-300 transition"
+                        >
+                          <ImagePlus className="w-4 h-4" />
+                          오브젝트 이미지 추가
                         </button>
                       )}
                     </div>

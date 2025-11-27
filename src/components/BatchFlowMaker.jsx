@@ -1828,52 +1828,35 @@ export default function BatchFlowMaker({ onBack }) {
                   </div>
                 </div>
 
-                {/* Main Preview - Smartphone Frame with Moveable */}
-                <div className="flex-1 flex items-center justify-center">
+                {/* Main Preview - Actual Instagram Size Preview */}
+                <div className="flex-1 flex items-center justify-center py-2">
                   <div className="relative">
-                    {/* Phone outer frame */}
-                    <div className="bg-gradient-to-b from-zinc-700 to-zinc-900 rounded-[2.5rem] p-2 shadow-2xl shadow-black/60">
-                      <div className="bg-black rounded-[2rem] p-1.5 relative">
-                        {/* Dynamic Island */}
-                        <div className="absolute top-3 left-1/2 -translate-x-1/2 w-20 h-5 bg-black rounded-full z-30 flex items-center justify-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-zinc-800" />
-                          <div className="w-8 h-2 rounded-full bg-zinc-800" />
-                        </div>
-
-                        {/* Screen with Moveable support */}
-                        <div
-                          ref={moveableRef}
-                          className="rounded-[1.5rem] overflow-hidden bg-zinc-900 relative"
-                          style={{
-                            width: '240px',
-                            aspectRatio: aspectRatio === '1:1' ? '1/1' : '4/5'
-                          }}
-                          onMouseMove={(e) => {
-                            if (!contentData[previewIndex]?.objectImage) return;
-                            const target = e.currentTarget.querySelector('[data-moveable="object"]');
-                            if (target && e.buttons === 1) {
-                              const rect = e.currentTarget.getBoundingClientRect();
-                              const x = ((e.clientX - rect.left) / rect.width) * 100;
-                              const y = ((e.clientY - rect.top) / rect.height) * 100;
-                              updateDragPosition(previewIndex, 'object', Math.max(10, Math.min(90, x)), Math.max(10, Math.min(90, y)));
-                            }
-                          }}
-                        >
-                          {contentData[previewIndex] && renderSlidePreview(contentData[previewIndex], previewIndex, false, true)}
-                        </div>
-
-                        {/* Home indicator */}
-                        <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-24 h-1 bg-white/20 rounded-full" />
-                      </div>
+                    {/* Preview container with shadow */}
+                    <div
+                      ref={moveableRef}
+                      className="rounded-lg overflow-hidden bg-zinc-900 relative shadow-2xl shadow-black/50 ring-1 ring-white/10"
+                      style={{
+                        width: aspectRatio === '1:1' ? '324px' : '324px',
+                        height: aspectRatio === '1:1' ? '324px' : '405px'
+                      }}
+                      onMouseMove={(e) => {
+                        if (!contentData[previewIndex]?.objectImage) return;
+                        const target = e.currentTarget.querySelector('[data-moveable="object"]');
+                        if (target && e.buttons === 1) {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          const x = ((e.clientX - rect.left) / rect.width) * 100;
+                          const y = ((e.clientY - rect.top) / rect.height) * 100;
+                          updateDragPosition(previewIndex, 'object', Math.max(10, Math.min(90, x)), Math.max(10, Math.min(90, y)));
+                        }
+                      }}
+                    >
+                      {contentData[previewIndex] && renderSlidePreview(contentData[previewIndex], previewIndex, false, true)}
                     </div>
 
-                    {/* Glow effect */}
-                    <div className="absolute inset-0 rounded-[2.5rem] bg-gradient-to-t from-purple-500/5 to-transparent pointer-events-none" />
-
-                    {/* Side buttons */}
-                    <div className="absolute -left-1 top-24 w-1 h-8 bg-zinc-600 rounded-l" />
-                    <div className="absolute -left-1 top-36 w-1 h-12 bg-zinc-600 rounded-l" />
-                    <div className="absolute -right-1 top-28 w-1 h-16 bg-zinc-600 rounded-r" />
+                    {/* Size indicator */}
+                    <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] text-white/30">
+                      {aspectRatio === '1:1' ? '1080 × 1080' : '1080 × 1350'} px
+                    </div>
                   </div>
                 </div>
 

@@ -189,10 +189,75 @@ export default function BatchFlowMaker({ onBack }) {
     setShowAISettings(false);
   };
 
-  // Render slide preview
+  // SVG Decorations for professional designs
+  const DecoCircles = ({ color, opacity = 0.1 }) => (
+    <svg className="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="none">
+      <circle cx="10%" cy="15%" r="8%" fill={color} opacity={opacity} />
+      <circle cx="90%" cy="85%" r="12%" fill={color} opacity={opacity * 0.7} />
+      <circle cx="85%" cy="10%" r="5%" fill={color} opacity={opacity * 0.5} />
+    </svg>
+  );
+
+  const DecoLines = ({ color, opacity = 0.15 }) => (
+    <svg className="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="none">
+      <line x1="5%" y1="20%" x2="25%" y2="20%" stroke={color} strokeWidth="3" opacity={opacity} />
+      <line x1="75%" y1="80%" x2="95%" y2="80%" stroke={color} strokeWidth="3" opacity={opacity} />
+    </svg>
+  );
+
+  const DecoCorners = ({ color, opacity = 0.2 }) => (
+    <svg className="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="none">
+      <path d="M0,0 L15%,0 L15%,3% L3%,3% L3%,15% L0,15% Z" fill={color} opacity={opacity} />
+      <path d="M100%,100% L85%,100% L85%,97% L97%,97% L97%,85% L100%,85% Z" fill={color} opacity={opacity} />
+    </svg>
+  );
+
+  const DecoGeometric = ({ color, opacity = 0.08 }) => (
+    <svg className="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="none">
+      <polygon points="0,100 0,70 15,85" fill={color} opacity={opacity} />
+      <polygon points="100,0 100,30 85,15" fill={color} opacity={opacity} />
+      <rect x="80%" y="75%" width="15%" height="2%" fill={color} opacity={opacity * 1.5} />
+      <rect x="5%" y="23%" width="15%" height="2%" fill={color} opacity={opacity * 1.5} />
+    </svg>
+  );
+
+  const DecoDots = ({ color, opacity = 0.15 }) => (
+    <svg className="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="none">
+      {[...Array(5)].map((_, i) => (
+        <circle key={`dot-top-${i}`} cx={`${8 + i * 4}%`} cy="8%" r="1%" fill={color} opacity={opacity} />
+      ))}
+      {[...Array(5)].map((_, i) => (
+        <circle key={`dot-bottom-${i}`} cx={`${72 + i * 4}%`} cy="92%" r="1%" fill={color} opacity={opacity} />
+      ))}
+    </svg>
+  );
+
+  const DecoWave = ({ color, opacity = 0.1 }) => (
+    <svg className="absolute bottom-0 left-0 w-full h-1/4 pointer-events-none" preserveAspectRatio="none" viewBox="0 0 100 100">
+      <path d="M0,40 Q25,20 50,40 T100,40 L100,100 L0,100 Z" fill={color} opacity={opacity} />
+      <path d="M0,60 Q25,40 50,60 T100,60 L100,100 L0,100 Z" fill={color} opacity={opacity * 0.7} />
+    </svg>
+  );
+
+  const DecoFrame = ({ color, opacity = 0.15 }) => (
+    <div className="absolute inset-4 border-2 rounded-lg pointer-events-none" style={{ borderColor: color, opacity }} />
+  );
+
+  // Render slide preview with Canva-style professional designs
   const renderSlidePreview = (slideData, index, forDownload = false) => {
     const themePack = THEME_PACKS[selectedThemePack] || THEME_PACKS['modernMinimal'];
     const slideType = slideData.type;
+    const isDownload = forDownload;
+
+    // Scale factors for download vs preview
+    const scale = isDownload ? 1 : 1;
+    const titleSize = isDownload ? 'text-5xl' : 'text-2xl md:text-3xl';
+    const subtitleSize = isDownload ? 'text-2xl' : 'text-base md:text-lg';
+    const headingSize = isDownload ? 'text-4xl' : 'text-xl md:text-2xl';
+    const bodySize = isDownload ? 'text-xl' : 'text-sm md:text-base';
+    const smallSize = isDownload ? 'text-lg' : 'text-xs';
+    const numberSize = isDownload ? 'w-24 h-24 text-4xl' : 'w-14 h-14 text-2xl';
+    const buttonPadding = isDownload ? 'px-12 py-4 text-xl' : 'px-6 py-2.5 text-sm';
 
     let styles = {};
     if (slideType === 'cover') {
@@ -206,132 +271,329 @@ export default function BatchFlowMaker({ onBack }) {
     const containerStyle = {
       background: styles.background,
       color: styles.textColor || styles.titleColor,
-      ...(styles.pattern && { backgroundImage: `${styles.pattern}, ${styles.background}` })
+      ...(styles.pattern && { backgroundImage: `${styles.pattern}, ${styles.background}` }),
+      ...(styles.glow && { boxShadow: styles.glow })
     };
+
+    const accentColor = styles.accentColor || styles.titleColor;
 
     return (
       <div
         ref={forDownload ? (el => slideRefs.current[index] = el) : null}
-        className="w-full h-full flex flex-col items-center justify-center p-6 text-center relative"
+        className="w-full h-full flex flex-col items-center justify-center text-center relative overflow-hidden"
         style={containerStyle}
       >
+        {/* Cover Slide - Professional Design */}
         {slideType === 'cover' && (
           <>
-            <h1
-              className="text-2xl md:text-3xl font-black mb-3 leading-tight"
-              style={{ color: styles.titleColor }}
-            >
-              {slideData.title || '제목을 입력하세요'}
-            </h1>
-            <p
-              className="text-base md:text-lg opacity-90"
-              style={{ color: styles.subtitleColor }}
-            >
-              {slideData.subtitle || '부제목'}
-            </p>
+            <DecoCircles color={accentColor} opacity={0.1} />
+            <DecoCorners color={accentColor} opacity={0.25} />
+            <DecoLines color={accentColor} opacity={0.2} />
+
+            <div className="relative z-10 px-8 py-6 flex flex-col items-center justify-center h-full">
+              {/* Top accent line */}
+              <div
+                className="w-16 h-1 rounded-full mb-6"
+                style={{ background: accentColor }}
+              />
+
+              {/* Main title with enhanced typography */}
+              <h1
+                className={`${titleSize} font-black mb-4 leading-tight tracking-tight`}
+                style={{
+                  color: styles.titleColor,
+                  textShadow: styles.glow ? `0 0 30px ${styles.titleColor}40` : 'none'
+                }}
+              >
+                {slideData.title || '제목을 입력하세요'}
+              </h1>
+
+              {/* Subtitle with decorative elements */}
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-px" style={{ background: styles.subtitleColor, opacity: 0.5 }} />
+                <p
+                  className={`${subtitleSize} font-medium tracking-wide`}
+                  style={{ color: styles.subtitleColor }}
+                >
+                  {slideData.subtitle || '부제목'}
+                </p>
+                <div className="w-8 h-px" style={{ background: styles.subtitleColor, opacity: 0.5 }} />
+              </div>
+
+              {/* Bottom accent */}
+              <div
+                className="w-24 h-1 rounded-full mt-8"
+                style={{ background: `linear-gradient(90deg, transparent, ${accentColor}, transparent)` }}
+              />
+            </div>
           </>
         )}
 
+        {/* Item/Step Slide - Card Style Design */}
         {(slideType === 'item' || slideType === 'step') && (
           <>
-            <div
-              className="w-12 h-12 rounded-full flex items-center justify-center text-xl font-black mb-3"
-              style={{ background: styles.numberBg, color: styles.numberColor }}
-            >
-              {slideData.number || index}
+            <DecoGeometric color={accentColor} opacity={0.1} />
+            <DecoDots color={accentColor} opacity={0.2} />
+
+            <div className="relative z-10 px-8 py-6 flex flex-col items-center justify-center h-full">
+              {/* Large number badge with gradient */}
+              <div
+                className={`${numberSize} rounded-2xl flex items-center justify-center font-black mb-6 shadow-lg`}
+                style={{
+                  background: styles.numberBg,
+                  color: styles.numberColor,
+                  boxShadow: `0 8px 32px ${accentColor}30`
+                }}
+              >
+                {slideType === 'step' ? `${slideData.number || index}` : slideData.number || index}
+              </div>
+
+              {/* Step label for tutorial */}
+              {slideType === 'step' && (
+                <div
+                  className={`${smallSize} font-bold uppercase tracking-widest mb-2`}
+                  style={{ color: accentColor }}
+                >
+                  STEP {slideData.number || index}
+                </div>
+              )}
+
+              {/* Title with underline accent */}
+              <h2
+                className={`${headingSize} font-bold mb-3 leading-tight`}
+                style={{ color: styles.titleColor }}
+              >
+                {slideData.itemTitle || slideData.stepTitle || '항목 제목'}
+              </h2>
+
+              {/* Accent underline */}
+              <div
+                className="w-12 h-1 rounded-full mb-4"
+                style={{ background: accentColor }}
+              />
+
+              {/* Description with styled container */}
+              <div
+                className="px-6 py-3 rounded-xl max-w-[85%]"
+                style={{ background: `${styles.highlightColor || accentColor}15` }}
+              >
+                <p
+                  className={`${bodySize} leading-relaxed`}
+                  style={{ color: styles.textColor }}
+                >
+                  {slideData.itemDescription || slideData.stepDescription || '설명을 입력하세요'}
+                </p>
+              </div>
             </div>
-            <h2
-              className="text-xl md:text-2xl font-bold mb-2"
-              style={{ color: styles.titleColor }}
-            >
-              {slideData.itemTitle || slideData.stepTitle || '항목 제목'}
-            </h2>
-            <p
-              className="text-sm md:text-base"
-              style={{ color: styles.textColor }}
-            >
-              {slideData.itemDescription || slideData.stepDescription || '설명을 입력하세요'}
-            </p>
           </>
         )}
 
+        {/* Question Slide - Engaging Design */}
         {slideType === 'question' && (
           <>
-            <div className="text-4xl mb-3">❓</div>
-            <h2
-              className="text-xl md:text-2xl font-bold"
-              style={{ color: styles.titleColor }}
-            >
-              {slideData.questionText || '질문을 입력하세요'}
-            </h2>
-          </>
-        )}
+            <DecoCircles color={accentColor} opacity={0.12} />
+            <DecoWave color={accentColor} opacity={0.08} />
 
-        {slideType === 'answer' && (
-          <>
-            <div className="text-4xl mb-3">💡</div>
-            <h2
-              className="text-xl md:text-2xl font-bold mb-2"
-              style={{ color: styles.titleColor }}
-            >
-              {slideData.answerText || '답변'}
-            </h2>
-            <p
-              className="text-sm md:text-base"
-              style={{ color: styles.textColor }}
-            >
-              {slideData.answerDetail || ''}
-            </p>
-          </>
-        )}
+            <div className="relative z-10 px-8 py-6 flex flex-col items-center justify-center h-full">
+              {/* Question mark icon with glow */}
+              <div
+                className={`${isDownload ? 'w-20 h-20 text-5xl' : 'w-12 h-12 text-2xl'} rounded-full flex items-center justify-center mb-6 font-black`}
+                style={{
+                  background: `${accentColor}20`,
+                  color: accentColor,
+                  boxShadow: `0 0 40px ${accentColor}20`
+                }}
+              >
+                ?
+              </div>
 
-        {slideType === 'quote' && (
-          <>
-            <div className="text-3xl mb-3">"</div>
-            <p
-              className="text-lg md:text-xl font-medium italic mb-3"
-              style={{ color: styles.titleColor }}
-            >
-              {slideData.quoteText || '명언을 입력하세요'}
-            </p>
-            {slideData.quoteAuthor && (
-              <p className="text-xs opacity-70" style={{ color: styles.textColor }}>
-                - {slideData.quoteAuthor}
-              </p>
-            )}
-          </>
-        )}
+              {/* Question text with emphasis */}
+              <h2
+                className={`${headingSize} font-bold leading-snug max-w-[90%]`}
+                style={{ color: styles.titleColor }}
+              >
+                {slideData.questionText || '질문을 입력하세요'}
+              </h2>
 
-        {slideType === 'cta' && (
-          <>
-            <h2
-              className="text-xl md:text-2xl font-bold mb-4"
-              style={{ color: styles.titleColor }}
-            >
-              {slideData.ctaText || '지금 바로 시작하세요!'}
-            </h2>
-            <div
-              className="px-5 py-2 rounded-full font-bold text-base"
-              style={{ background: styles.buttonBg, color: styles.buttonColor }}
-            >
-              {slideData.ctaAction || '팔로우하기'}
+              {/* Decorative bottom element */}
+              <div className="flex items-center gap-2 mt-6">
+                <div className="w-2 h-2 rounded-full" style={{ background: accentColor }} />
+                <div className="w-2 h-2 rounded-full" style={{ background: accentColor, opacity: 0.6 }} />
+                <div className="w-2 h-2 rounded-full" style={{ background: accentColor, opacity: 0.3 }} />
+              </div>
             </div>
           </>
         )}
 
-        {/* Generic fallback */}
-        {!['cover', 'item', 'step', 'question', 'answer', 'quote', 'cta'].includes(slideType) && (
-          <div style={{ color: styles.titleColor }}>
-            <div className="text-3xl mb-3">📝</div>
-            <p className="text-lg font-medium">
-              {Object.values(slideData).find(v => typeof v === 'string' && v && v !== slideType) || `${slideType} 슬라이드`}
-            </p>
-          </div>
+        {/* Answer Slide - Reveal Design */}
+        {slideType === 'answer' && (
+          <>
+            <DecoCorners color={accentColor} opacity={0.2} />
+            <DecoLines color={accentColor} opacity={0.15} />
+
+            <div className="relative z-10 px-8 py-6 flex flex-col items-center justify-center h-full">
+              {/* Lightbulb icon */}
+              <div
+                className={`${isDownload ? 'w-16 h-16 text-4xl' : 'w-10 h-10 text-xl'} rounded-full flex items-center justify-center mb-5`}
+                style={{
+                  background: `linear-gradient(135deg, ${accentColor}, ${accentColor}80)`,
+                  color: styles.numberColor || '#fff',
+                  boxShadow: `0 4px 20px ${accentColor}40`
+                }}
+              >
+                💡
+              </div>
+
+              {/* Answer label */}
+              <div
+                className={`${smallSize} font-bold uppercase tracking-widest mb-3`}
+                style={{ color: accentColor }}
+              >
+                ANSWER
+              </div>
+
+              {/* Main answer */}
+              <h2
+                className={`${headingSize} font-bold mb-4 leading-tight`}
+                style={{ color: styles.titleColor }}
+              >
+                {slideData.answerText || '답변'}
+              </h2>
+
+              {/* Detail with card style */}
+              {slideData.answerDetail && (
+                <div
+                  className="px-6 py-4 rounded-2xl max-w-[90%] border"
+                  style={{
+                    background: `${styles.highlightColor || accentColor}10`,
+                    borderColor: `${accentColor}20`
+                  }}
+                >
+                  <p
+                    className={`${bodySize} leading-relaxed`}
+                    style={{ color: styles.textColor }}
+                  >
+                    {slideData.answerDetail}
+                  </p>
+                </div>
+              )}
+            </div>
+          </>
         )}
 
-        {/* Instagram ID watermark */}
+        {/* Quote Slide - Elegant Design */}
+        {slideType === 'quote' && (
+          <>
+            <DecoFrame color={accentColor} opacity={0.1} />
+
+            <div className="relative z-10 px-10 py-8 flex flex-col items-center justify-center h-full">
+              {/* Large quotation mark */}
+              <div
+                className={`${isDownload ? 'text-8xl' : 'text-5xl'} font-serif leading-none mb-2`}
+                style={{ color: accentColor, opacity: 0.3 }}
+              >
+                "
+              </div>
+
+              {/* Quote text */}
+              <p
+                className={`${headingSize} font-medium italic leading-relaxed max-w-[85%] text-center mb-4`}
+                style={{ color: styles.titleColor }}
+              >
+                {slideData.quoteText || '명언을 입력하세요'}
+              </p>
+
+              {/* Author with line */}
+              {slideData.quoteAuthor && (
+                <div className="flex items-center gap-3 mt-4">
+                  <div className="w-8 h-px" style={{ background: accentColor, opacity: 0.5 }} />
+                  <p
+                    className={`${smallSize} font-medium tracking-wide`}
+                    style={{ color: styles.textColor, opacity: 0.8 }}
+                  >
+                    {slideData.quoteAuthor}
+                  </p>
+                  <div className="w-8 h-px" style={{ background: accentColor, opacity: 0.5 }} />
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* CTA Slide - Action-Oriented Design */}
+        {slideType === 'cta' && (
+          <>
+            <DecoCircles color={styles.buttonBg} opacity={0.15} />
+            <DecoGeometric color={styles.buttonBg} opacity={0.1} />
+
+            <div className="relative z-10 px-8 py-6 flex flex-col items-center justify-center h-full">
+              {/* Top decorative element */}
+              <div className="flex items-center gap-2 mb-6">
+                <div className="w-3 h-3 rounded-full" style={{ background: styles.buttonBg }} />
+                <div className="w-6 h-1" style={{ background: styles.buttonBg }} />
+                <div className="w-3 h-3 rounded-full" style={{ background: styles.buttonBg }} />
+              </div>
+
+              {/* CTA headline */}
+              <h2
+                className={`${headingSize} font-black mb-6 leading-tight`}
+                style={{
+                  color: styles.titleColor,
+                  textShadow: styles.glow ? `0 0 20px ${styles.titleColor}40` : 'none'
+                }}
+              >
+                {slideData.ctaText || '지금 바로 시작하세요!'}
+              </h2>
+
+              {/* CTA Button with hover-like styling */}
+              <div
+                className={`${buttonPadding} rounded-full font-bold shadow-lg transform transition`}
+                style={{
+                  background: styles.buttonBg,
+                  color: styles.buttonColor,
+                  boxShadow: `0 8px 30px ${typeof styles.buttonBg === 'string' && styles.buttonBg.includes('gradient') ? 'rgba(0,0,0,0.3)' : styles.buttonBg + '50'}`
+                }}
+              >
+                {slideData.ctaAction || '팔로우하기'}
+              </div>
+
+              {/* Swipe indicator */}
+              <div className="flex items-center gap-1 mt-8">
+                <div className={`${isDownload ? 'w-4 h-1' : 'w-2 h-0.5'} rounded-full`} style={{ background: styles.textColor, opacity: 0.3 }} />
+                <div className={`${isDownload ? 'w-8 h-1' : 'w-4 h-0.5'} rounded-full`} style={{ background: styles.textColor, opacity: 0.5 }} />
+                <div className={`${isDownload ? 'w-4 h-1' : 'w-2 h-0.5'} rounded-full`} style={{ background: styles.textColor, opacity: 0.3 }} />
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Generic fallback with improved design */}
+        {!['cover', 'item', 'step', 'question', 'answer', 'quote', 'cta'].includes(slideType) && (
+          <>
+            <DecoCorners color={accentColor} opacity={0.15} />
+            <div className="relative z-10 px-8 py-6 flex flex-col items-center justify-center h-full">
+              <div
+                className={`${isDownload ? 'w-16 h-16 text-4xl' : 'w-10 h-10 text-xl'} rounded-xl flex items-center justify-center mb-4`}
+                style={{ background: `${accentColor}20` }}
+              >
+                📝
+              </div>
+              <p
+                className={`${headingSize} font-bold max-w-[85%]`}
+                style={{ color: styles.titleColor }}
+              >
+                {Object.values(slideData).find(v => typeof v === 'string' && v && v !== slideType) || `${slideType} 슬라이드`}
+              </p>
+            </div>
+          </>
+        )}
+
+        {/* Instagram ID watermark - improved positioning */}
         {instagramId && (
-          <div className="absolute bottom-2 right-3 text-[10px] opacity-40" style={{ color: styles.textColor || styles.titleColor }}>
+          <div
+            className={`absolute bottom-3 right-4 ${isDownload ? 'text-sm' : 'text-[10px]'} font-medium tracking-wide`}
+            style={{ color: styles.textColor || styles.titleColor, opacity: 0.4 }}
+          >
             {instagramId}
           </div>
         )}

@@ -17,27 +17,27 @@ export const THEME_PACKS = {
       text: '#1a1a1a'
     },
     cover: {
-      background: 'linear-gradient(180deg, #ffffff 0%, #f5f5f5 100%)',
-      titleColor: '#000000',
-      subtitleColor: '#666666',
-      accentColor: '#000000',
+      background: 'linear-gradient(180deg, #ffffff 0%, #f8f8f8 100%)',
+      titleColor: '#1a1a1a',
+      subtitleColor: '#555555',
+      accentColor: '#333333',
       pattern: null
     },
     body: {
-      background: '#ffffff',
-      titleColor: '#000000',
-      textColor: '#333333',
-      accentColor: '#000000',
+      background: '#fafafa',
+      titleColor: '#1a1a1a',
+      textColor: '#444444',
+      accentColor: '#333333',
       highlightColor: '#f0f0f0',
-      numberBg: '#000000',
+      numberBg: 'linear-gradient(135deg, #333333 0%, #1a1a1a 100%)',
       numberColor: '#ffffff'
     },
     cta: {
-      background: '#000000',
+      background: 'linear-gradient(135deg, #1a1a1a 0%, #333333 100%)',
       titleColor: '#ffffff',
       textColor: '#cccccc',
       buttonBg: '#ffffff',
-      buttonColor: '#000000'
+      buttonColor: '#1a1a1a'
     }
   },
 
@@ -54,27 +54,29 @@ export const THEME_PACKS = {
       text: '#ffffff'
     },
     cover: {
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
       titleColor: '#ffffff',
-      subtitleColor: 'rgba(255,255,255,0.9)',
+      subtitleColor: 'rgba(255,255,255,0.95)',
       accentColor: '#ffd700',
-      pattern: null
+      pattern: null,
+      glow: '0 0 60px rgba(102,126,234,0.3)'
     },
     body: {
-      background: 'linear-gradient(180deg, #f5f7fa 0%, #e4e8ec 100%)',
-      titleColor: '#667eea',
-      textColor: '#333333',
-      accentColor: '#764ba2',
-      highlightColor: '#667eea',
+      background: 'linear-gradient(180deg, #fafbff 0%, #f0f3ff 100%)',
+      titleColor: '#5a67d8',
+      textColor: '#4a5568',
+      accentColor: '#805ad5',
+      highlightColor: '#e9e3ff',
       numberBg: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
       numberColor: '#ffffff'
     },
     cta: {
-      background: 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
+      background: 'linear-gradient(135deg, #805ad5 0%, #667eea 50%, #764ba2 100%)',
       titleColor: '#ffffff',
-      textColor: 'rgba(255,255,255,0.9)',
-      buttonBg: '#ffd700',
-      buttonColor: '#1a1a1a'
+      textColor: 'rgba(255,255,255,0.95)',
+      buttonBg: 'linear-gradient(90deg, #ffd700 0%, #ffed4a 100%)',
+      buttonColor: '#1a1a1a',
+      glow: '0 0 40px rgba(118,75,162,0.4)'
     }
   },
 
@@ -91,27 +93,29 @@ export const THEME_PACKS = {
       text: '#ffffff'
     },
     cover: {
-      background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-      titleColor: '#ffffff',
-      subtitleColor: 'rgba(255,255,255,0.95)',
-      accentColor: '#fff3e0',
-      pattern: null
+      background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%)',
+      titleColor: '#6b2d5c',
+      subtitleColor: '#8b4d6b',
+      accentColor: '#ff6b8a',
+      pattern: null,
+      glow: '0 0 50px rgba(255,154,158,0.2)'
     },
     body: {
-      background: '#fffaf5',
-      titleColor: '#f5576c',
-      textColor: '#4a3f3f',
+      background: 'linear-gradient(180deg, #fff5f7 0%, #ffeef2 100%)',
+      titleColor: '#c44569',
+      textColor: '#6b4f5c',
       accentColor: '#f093fb',
-      highlightColor: '#fff0f5',
-      numberBg: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+      highlightColor: '#ffe4ec',
+      numberBg: 'linear-gradient(135deg, #ff9a9e 0%, #f093fb 100%)',
       numberColor: '#ffffff'
     },
     cta: {
-      background: 'linear-gradient(135deg, #f5576c 0%, #f093fb 100%)',
+      background: 'linear-gradient(135deg, #f093fb 0%, #ff9a9e 50%, #fecfef 100%)',
       titleColor: '#ffffff',
-      textColor: 'rgba(255,255,255,0.9)',
+      textColor: 'rgba(255,255,255,0.95)',
       buttonBg: '#ffffff',
-      buttonColor: '#f5576c'
+      buttonColor: '#c44569',
+      glow: '0 0 40px rgba(240,147,251,0.3)'
     }
   },
 
@@ -128,27 +132,30 @@ export const THEME_PACKS = {
       text: '#ffffff'
     },
     cover: {
-      background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%)',
+      background: 'linear-gradient(135deg, #0d0d0d 0%, #1a1a2e 50%, #16213e 100%)',
       titleColor: '#ffffff',
       subtitleColor: '#00d4ff',
       accentColor: '#00d4ff',
-      pattern: 'radial-gradient(circle, rgba(0,212,255,0.1) 1px, transparent 1px)'
+      pattern: null,
+      glow: '0 0 80px rgba(0,212,255,0.15)'
     },
     body: {
-      background: '#0f0f0f',
+      background: 'linear-gradient(180deg, #0f0f17 0%, #121220 100%)',
       titleColor: '#00d4ff',
-      textColor: '#e0e0e0',
+      textColor: '#b0b8c8',
       accentColor: '#00d4ff',
       highlightColor: '#1a1a2e',
-      numberBg: '#00d4ff',
-      numberColor: '#000000'
+      numberBg: 'linear-gradient(135deg, #00d4ff 0%, #0099cc 100%)',
+      numberColor: '#000000',
+      glow: '0 0 20px rgba(0,212,255,0.2)'
     },
     cta: {
-      background: 'linear-gradient(135deg, #1a1a2e 0%, #0a0a0a 100%)',
+      background: 'linear-gradient(135deg, #16213e 0%, #0f0f17 100%)',
       titleColor: '#00d4ff',
-      textColor: '#ffffff',
-      buttonBg: '#00d4ff',
-      buttonColor: '#000000'
+      textColor: '#e0e8f0',
+      buttonBg: 'linear-gradient(90deg, #00d4ff 0%, #00a0cc 100%)',
+      buttonColor: '#000000',
+      glow: '0 0 50px rgba(0,212,255,0.25)'
     }
   },
 
@@ -169,26 +176,26 @@ export const THEME_PACKS = {
       titleColor: '#00fff9',
       subtitleColor: '#ff00ff',
       accentColor: '#ff00ff',
-      pattern: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,249,0.03) 2px, rgba(0,255,249,0.03) 4px)',
-      glow: '0 0 20px rgba(0,255,249,0.5)'
+      pattern: null,
+      glow: '0 0 60px rgba(0,255,249,0.2), 0 0 100px rgba(255,0,255,0.1)'
     },
     body: {
-      background: '#0f0c29',
+      background: 'linear-gradient(180deg, #0f0c29 0%, #1a1545 100%)',
       titleColor: '#ff00ff',
-      textColor: '#00fff9',
-      accentColor: '#ff00ff',
-      highlightColor: 'rgba(255,0,255,0.1)',
-      numberBg: '#ff00ff',
+      textColor: '#c8d0e0',
+      accentColor: '#00fff9',
+      highlightColor: 'rgba(255,0,255,0.15)',
+      numberBg: 'linear-gradient(135deg, #ff00ff 0%, #00fff9 100%)',
       numberColor: '#000000',
-      glow: '0 0 10px rgba(255,0,255,0.5)'
+      glow: '0 0 30px rgba(255,0,255,0.3)'
     },
     cta: {
-      background: 'linear-gradient(135deg, #24243e 0%, #0f0c29 100%)',
+      background: 'linear-gradient(135deg, #1a1545 0%, #0f0c29 100%)',
       titleColor: '#00fff9',
-      textColor: '#ff00ff',
+      textColor: '#e0e8f0',
       buttonBg: 'linear-gradient(90deg, #00fff9 0%, #ff00ff 100%)',
       buttonColor: '#000000',
-      glow: '0 0 15px rgba(0,255,249,0.5)'
+      glow: '0 0 40px rgba(0,255,249,0.3), 0 0 60px rgba(255,0,255,0.2)'
     }
   },
 
@@ -205,27 +212,27 @@ export const THEME_PACKS = {
       text: '#5c4a5e'
     },
     cover: {
-      background: 'linear-gradient(180deg, #ffeef8 0%, #e8f4f8 100%)',
+      background: 'linear-gradient(135deg, #ffeef8 0%, #e8f4f8 50%, #fff5e6 100%)',
       titleColor: '#5c4a5e',
       subtitleColor: '#8b7a8b',
-      accentColor: '#b8a9c9',
+      accentColor: '#d4a5c9',
       pattern: null
     },
     body: {
-      background: '#fefefe',
-      titleColor: '#5c4a5e',
+      background: 'linear-gradient(180deg, #fefefe 0%, #faf8ff 100%)',
+      titleColor: '#6b5177',
       textColor: '#6b5b6e',
-      accentColor: '#b8a9c9',
+      accentColor: '#c9a5d4',
       highlightColor: '#f5e6f0',
-      numberBg: 'linear-gradient(135deg, #b8a9c9 0%, #a8d8ea 100%)',
+      numberBg: 'linear-gradient(135deg, #d4a5c9 0%, #a5c9d4 100%)',
       numberColor: '#ffffff'
     },
     cta: {
-      background: 'linear-gradient(135deg, #b8a9c9 0%, #a8d8ea 100%)',
+      background: 'linear-gradient(135deg, #c9a5d4 0%, #a5c9d4 50%, #d4c9a5 100%)',
       titleColor: '#ffffff',
       textColor: 'rgba(255,255,255,0.95)',
       buttonBg: '#ffffff',
-      buttonColor: '#5c4a5e'
+      buttonColor: '#6b5177'
     }
   },
 
@@ -238,31 +245,31 @@ export const THEME_PACKS = {
     tags: ['매거진', '대담', '임팩트'],
     preview: {
       background: '#ffffff',
-      accent: '#ff0000',
+      accent: '#e63946',
       text: '#000000'
     },
     cover: {
       background: '#ffffff',
-      titleColor: '#000000',
-      subtitleColor: '#ff0000',
-      accentColor: '#ff0000',
+      titleColor: '#1d3557',
+      subtitleColor: '#e63946',
+      accentColor: '#e63946',
       pattern: null
     },
     body: {
-      background: '#f8f8f8',
-      titleColor: '#ff0000',
-      textColor: '#1a1a1a',
-      accentColor: '#ff0000',
-      highlightColor: '#fff0f0',
-      numberBg: '#ff0000',
+      background: '#f8f9fa',
+      titleColor: '#e63946',
+      textColor: '#2b2d42',
+      accentColor: '#e63946',
+      highlightColor: '#fff1f3',
+      numberBg: 'linear-gradient(135deg, #e63946 0%, #c1121f 100%)',
       numberColor: '#ffffff'
     },
     cta: {
-      background: '#ff0000',
+      background: 'linear-gradient(135deg, #e63946 0%, #c1121f 100%)',
       titleColor: '#ffffff',
-      textColor: 'rgba(255,255,255,0.9)',
-      buttonBg: '#000000',
-      buttonColor: '#ffffff'
+      textColor: 'rgba(255,255,255,0.95)',
+      buttonBg: '#ffffff',
+      buttonColor: '#e63946'
     }
   },
 
@@ -279,27 +286,27 @@ export const THEME_PACKS = {
       text: '#3e3028'
     },
     cover: {
-      background: 'linear-gradient(180deg, #f5f0e8 0%, #e8dfd0 100%)',
+      background: 'linear-gradient(135deg, #f5f0e8 0%, #e8dfd0 50%, #ddd5c5 100%)',
       titleColor: '#3e3028',
-      subtitleColor: '#8b7355',
-      accentColor: '#8b7355',
+      subtitleColor: '#7a6555',
+      accentColor: '#a08060',
       pattern: null
     },
     body: {
-      background: '#faf8f5',
-      titleColor: '#3e3028',
-      textColor: '#5a4a3a',
-      accentColor: '#8b7355',
+      background: 'linear-gradient(180deg, #faf8f5 0%, #f5f0e8 100%)',
+      titleColor: '#5a4a3a',
+      textColor: '#6b5a4a',
+      accentColor: '#a08060',
       highlightColor: '#f0ebe0',
-      numberBg: '#8b7355',
+      numberBg: 'linear-gradient(135deg, #a08060 0%, #8b7355 100%)',
       numberColor: '#ffffff'
     },
     cta: {
       background: 'linear-gradient(135deg, #8b7355 0%, #6b5545 100%)',
       titleColor: '#ffffff',
-      textColor: 'rgba(255,255,255,0.9)',
+      textColor: 'rgba(255,255,255,0.95)',
       buttonBg: '#f5f0e8',
-      buttonColor: '#3e3028'
+      buttonColor: '#5a4a3a'
     }
   },
 
@@ -316,27 +323,29 @@ export const THEME_PACKS = {
       text: '#ffffff'
     },
     cover: {
-      background: 'linear-gradient(180deg, #89f7fe 0%, #66a6ff 100%)',
+      background: 'linear-gradient(135deg, #667eea 0%, #64b3f4 50%, #89f7fe 100%)',
       titleColor: '#ffffff',
       subtitleColor: 'rgba(255,255,255,0.95)',
       accentColor: '#ffffff',
-      pattern: null
+      pattern: null,
+      glow: '0 0 60px rgba(100,179,244,0.3)'
     },
     body: {
-      background: '#f0f9ff',
-      titleColor: '#0066cc',
-      textColor: '#1a3a5c',
-      accentColor: '#0088ff',
-      highlightColor: '#e0f2fe',
-      numberBg: 'linear-gradient(135deg, #66a6ff 0%, #89f7fe 100%)',
+      background: 'linear-gradient(180deg, #f0f9ff 0%, #e6f4ff 100%)',
+      titleColor: '#1e5799',
+      textColor: '#2d5a7b',
+      accentColor: '#4a90d9',
+      highlightColor: '#e0f0ff',
+      numberBg: 'linear-gradient(135deg, #4a90d9 0%, #64b3f4 100%)',
       numberColor: '#ffffff'
     },
     cta: {
-      background: 'linear-gradient(135deg, #66a6ff 0%, #0066cc 100%)',
+      background: 'linear-gradient(135deg, #4a90d9 0%, #667eea 100%)',
       titleColor: '#ffffff',
-      textColor: 'rgba(255,255,255,0.9)',
+      textColor: 'rgba(255,255,255,0.95)',
       buttonBg: '#ffffff',
-      buttonColor: '#0066cc'
+      buttonColor: '#1e5799',
+      glow: '0 0 40px rgba(74,144,217,0.3)'
     }
   },
 
@@ -353,27 +362,29 @@ export const THEME_PACKS = {
       text: '#ffffff'
     },
     cover: {
-      background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)',
+      background: 'linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 50%, #1a1a1a 100%)',
       titleColor: '#d4af37',
-      subtitleColor: '#ffffff',
+      subtitleColor: '#e8e8e8',
       accentColor: '#d4af37',
-      pattern: 'radial-gradient(circle, rgba(212,175,55,0.05) 1px, transparent 1px)'
+      pattern: null,
+      glow: '0 0 80px rgba(212,175,55,0.15)'
     },
     body: {
-      background: '#f8f6f0',
-      titleColor: '#1a1a1a',
-      textColor: '#333333',
-      accentColor: '#d4af37',
+      background: 'linear-gradient(180deg, #faf8f2 0%, #f5f0e5 100%)',
+      titleColor: '#2a2a2a',
+      textColor: '#4a4a4a',
+      accentColor: '#c9a227',
       highlightColor: '#faf5e8',
-      numberBg: 'linear-gradient(135deg, #d4af37 0%, #f4d03f 100%)',
+      numberBg: 'linear-gradient(135deg, #d4af37 0%, #e8c84a 50%, #d4af37 100%)',
       numberColor: '#1a1a1a'
     },
     cta: {
-      background: 'linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%)',
+      background: 'linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%)',
       titleColor: '#d4af37',
-      textColor: '#ffffff',
-      buttonBg: 'linear-gradient(90deg, #d4af37 0%, #f4d03f 100%)',
-      buttonColor: '#1a1a1a'
+      textColor: '#e8e8e8',
+      buttonBg: 'linear-gradient(90deg, #c9a227 0%, #d4af37 50%, #e8c84a 100%)',
+      buttonColor: '#1a1a1a',
+      glow: '0 0 50px rgba(212,175,55,0.2)'
     }
   }
 };

@@ -745,43 +745,60 @@ export default function BatchFlowMaker({ onBack }) {
     );
   };
 
-  // Download all slides
+  // Helper to convert data URL to blob efficiently (no fetch needed)
+  const dataURLtoBlob = (dataURL) => {
+    const arr = dataURL.split(',');
+    const mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], { type: mime });
+  };
+
+  // Download all slides - optimized for speed
   const downloadAll = async () => {
     setIsDownloading(true);
     const totalSlides = Object.keys(contentData).length;
     setDownloadProgress({ current: 0, total: totalSlides });
 
     const zip = new JSZip();
-    const results = [];
 
     try {
       await document.fonts.ready;
-      await new Promise(r => setTimeout(r, 100));
+      await new Promise(r => setTimeout(r, 50)); // Brief wait for fonts
 
+      // Process all slides in parallel for maximum speed
+      const capturePromises = [];
       for (let i = 0; i < totalSlides; i++) {
         if (!slideRefs.current[i]) continue;
 
-        setDownloadProgress({ current: i + 1, total: totalSlides });
-        await new Promise(r => setTimeout(r, 50));
-
-        try {
-          const node = slideRefs.current[i];
-          const currentWidth = node.offsetWidth;
-          const targetWidth = 1080;
-          const pixelRatio = targetWidth / currentWidth;
-
-          const dataUrl = await toPng(node, {
-            quality: 1,
-            pixelRatio: pixelRatio,
-          });
-          const res = await fetch(dataUrl);
-          const blob = await res.blob();
-          results.push({ index: i, blob });
-        } catch (err) {
-          console.error(`Error capturing slide ${i + 1}:`, err);
-        }
+        capturePromises.push(
+          (async (index) => {
+            try {
+              const node = slideRefs.current[index];
+              // Hidden slides are already 1080px wide, use pixelRatio 1
+              const dataUrl = await toPng(node, {
+                quality: 1,
+                pixelRatio: 1,
+              });
+              const blob = dataURLtoBlob(dataUrl);
+              return { index, blob };
+            } catch (err) {
+              console.error(`Error capturing slide ${index + 1}:`, err);
+              return null;
+            }
+          })(i)
+        );
       }
 
+      // Wait for all captures to complete
+      const results = await Promise.all(capturePromises);
+      setDownloadProgress({ current: totalSlides, total: totalSlides });
+
+      // Add successful results to ZIP
       results.forEach(result => {
         if (result && result.blob) {
           zip.file(`slide-${String(result.index + 1).padStart(2, '0')}.png`, result.blob);

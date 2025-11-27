@@ -143,9 +143,8 @@ function LandingPage({ onSelectMode }) {
           </div>
 
           {/* Features */}
-          <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+          <div className="mt-16 grid grid-cols-3 gap-4 max-w-3xl mx-auto">
             {[
-              { icon: '🚀', label: '서버 비용 없음', desc: '100% 무료' },
               { icon: '🎨', label: '10+ 테마 팩', desc: '표지~CTA 세트' },
               { icon: '🤖', label: 'AI 지원', desc: 'Gemini 연동' },
               { icon: '📱', label: '고해상도', desc: '1080px 출력' },

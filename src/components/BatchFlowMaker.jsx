@@ -78,10 +78,30 @@ export default function BatchFlowMaker({ onBack }) {
   const handleSelectStructure = (structure) => {
     setSelectedStructure(structure);
     const initialData = {};
-    structure.slides.forEach((slide, index) => {
-      initialData[index] = { type: slide.type, ...getDefaultContent(slide) };
-    });
+
+    // Use example content if available, otherwise use defaults
+    if (structure.exampleContent && structure.exampleContent.length > 0) {
+      structure.slides.forEach((slide, index) => {
+        const example = structure.exampleContent[index] || {};
+        initialData[index] = {
+          type: slide.type,
+          number: slide.number,
+          ...example
+        };
+      });
+    } else {
+      structure.slides.forEach((slide, index) => {
+        initialData[index] = { type: slide.type, ...getDefaultContent(slide) };
+      });
+    }
+
     setContentData(initialData);
+
+    // Apply default theme for the structure
+    if (structure.defaultTheme) {
+      setSelectedThemePack(structure.defaultTheme);
+    }
+
     setStep(2);
   };
 

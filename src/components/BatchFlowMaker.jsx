@@ -3,18 +3,14 @@ import { toPng } from 'html-to-image';
 import JSZip from 'jszip';
 import Moveable from 'react-moveable';
 import {
-  ChevronRight, ChevronLeft, Sparkles, Download, Wand2, RotateCcw,
-  Settings, Eye, Edit3, Palette, Check, X, Zap, Copy, ChevronDown, ChevronUp,
+  ChevronRight, ChevronLeft, Sparkles, Download, RotateCcw,
+  Eye, Edit3, Palette, Check, X, Zap, ChevronDown, ChevronUp,
   ImagePlus, Trash2, Upload, GripVertical
 } from 'lucide-react';
 
 // Import data
 import { FLOW_STRUCTURES, FLOW_CATEGORIES, getFlowStructuresList } from '../data/flowStructures';
 import { THEME_PACKS, PACK_CATEGORIES, getThemePacksList } from '../data/themePacks';
-import {
-  hasApiKey, getApiKey, saveApiKey, generateTitles,
-  generateFullContent, getTitleSuggestions
-} from '../services/geminiAI';
 
 /**
  * MiniSlidePreview - Simplified mini preview for thumbnails
@@ -579,13 +575,6 @@ export default function BatchFlowMaker({ onBack }) {
     localStorage.getItem('instaflow_instagram_id') || ''
   );
 
-  // AI features
-  const [showAISettings, setShowAISettings] = useState(false);
-  const [apiKey, setApiKey] = useState(getApiKey());
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [aiSuggestions, setAiSuggestions] = useState([]);
-  const [topic, setTopic] = useState('');
-
   // Download state
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(null);
@@ -599,6 +588,9 @@ export default function BatchFlowMaker({ onBack }) {
 
   // Current preview slide index
   const [previewIndex, setPreviewIndex] = useState(0);
+
+  // Mobile view mode: 'input' | 'preview'
+  const [mobileView, setMobileView] = useState('input');
 
   // Refs for download
   const slideRefs = useRef([]);
@@ -748,67 +740,6 @@ export default function BatchFlowMaker({ onBack }) {
       ...prev,
       [`${slideIndex}-${type}`]: { x, y }
     }));
-  };
-
-  // Generate AI content
-  const handleGenerateAI = async () => {
-    if (!topic.trim()) {
-      alert('주제를 입력해주세요.');
-      return;
-    }
-
-    if (!hasApiKey()) {
-      setShowAISettings(true);
-      return;
-    }
-
-    setIsGenerating(true);
-    try {
-      const content = await generateFullContent(topic, selectedStructure);
-      if (content && Array.isArray(content)) {
-        const newData = { ...contentData };
-        content.forEach((item, index) => {
-          if (newData[index]) {
-            newData[index] = { ...newData[index], ...item };
-          }
-        });
-        setContentData(newData);
-      }
-    } catch (error) {
-      alert('AI 생성 중 오류: ' + error.message);
-    }
-    setIsGenerating(false);
-  };
-
-  // Generate AI title suggestions
-  const handleGetTitleSuggestions = async () => {
-    if (!topic.trim()) return;
-
-    if (!hasApiKey()) {
-      setAiSuggestions(getTitleSuggestions(topic));
-      return;
-    }
-
-    setIsGenerating(true);
-    try {
-      const titles = await generateTitles(topic);
-      setAiSuggestions(titles.map(t => ({ suggestion: t })));
-    } catch (error) {
-      setAiSuggestions(getTitleSuggestions(topic));
-    }
-    setIsGenerating(false);
-  };
-
-  // Apply title suggestion
-  const applyTitleSuggestion = (title) => {
-    updateContent(0, 'title', title);
-    setAiSuggestions([]);
-  };
-
-  // Save API key
-  const handleSaveApiKey = () => {
-    saveApiKey(apiKey);
-    setShowAISettings(false);
   };
 
   // SVG Decorations for professional designs
@@ -1402,9 +1333,8 @@ export default function BatchFlowMaker({ onBack }) {
       setSelectedStructure(null);
       setContentData({});
       setSelectedThemePack('modernMinimal');
-      setTopic('');
-      setAiSuggestions([]);
       setPreviewIndex(0);
+      setDragPositions({});
     }
   };
 
@@ -1419,18 +1349,19 @@ export default function BatchFlowMaker({ onBack }) {
         }}
       />
 
-      {/* Header - Glassmorphism 2025 */}
+      {/* Header - Glassmorphism 2025 (Mobile Optimized) */}
       <div className="relative z-50 bg-black/20 backdrop-blur-xl border-b border-white/[0.08] sticky top-0">
-        <div className="max-w-7xl mx-auto px-4 py-3">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2 sm:py-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            {/* Left: Back + Title */}
+            <div className="flex items-center gap-2 sm:gap-4">
               <button
                 onClick={onBack}
-                className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-xl transition-all"
+                className="p-1.5 sm:p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-lg sm:rounded-xl transition-all"
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              <div>
+              <div className="hidden sm:block">
                 <h1 className="text-xl font-bold text-white flex items-center gap-2">
                   <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/30">
                     <Zap className="w-4 h-4 text-white" />
@@ -1438,12 +1369,21 @@ export default function BatchFlowMaker({ onBack }) {
                   원클릭 메이커
                 </h1>
               </div>
+              {/* Mobile: Mini logo */}
+              <div className="sm:hidden flex items-center gap-1.5">
+                <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                  <Zap className="w-3 h-3 text-white" />
+                </div>
+                <span className="text-sm font-bold text-white">메이커</span>
+              </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            {/* Right: Controls */}
+            <div className="flex items-center gap-1.5 sm:gap-2">
               {step === 2 && (
                 <>
-                  <div className="flex gap-1 mr-2 p-1 bg-white/5 rounded-lg">
+                  {/* Aspect ratio - hidden on mobile, shown in preview tab */}
+                  <div className="hidden sm:flex gap-1 mr-2 p-1 bg-white/5 rounded-lg">
                     <button
                       onClick={() => setAspectRatio('1:1')}
                       className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
@@ -1461,26 +1401,29 @@ export default function BatchFlowMaker({ onBack }) {
                       4:5
                     </button>
                   </div>
-                  {/* 2025 Download Button - Gradient with sparkle */}
+                  {/* Download Button - Compact on mobile */}
                   <button
                     onClick={downloadAll}
                     disabled={isDownloading}
-                    className="group relative px-5 py-2.5 bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 text-white rounded-xl font-bold text-sm hover:shadow-lg hover:shadow-purple-500/30 transition-all disabled:opacity-50 overflow-hidden"
+                    className="group relative px-3 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 text-white rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm hover:shadow-lg hover:shadow-purple-500/30 transition-all disabled:opacity-50 overflow-hidden"
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-violet-400 via-purple-400 to-fuchsia-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <span className="relative flex items-center gap-2">
+                    <span className="relative flex items-center gap-1.5 sm:gap-2">
                       {isDownloading ? (
                         <>
-                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                          {downloadProgress?.status === 'zipping'
-                            ? '압축 중...'
-                            : `처리 중 ${downloadProgress?.current || 0}/${downloadProgress?.total || 0}`
-                          }
+                          <div className="w-3.5 sm:w-4 h-3.5 sm:h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          <span className="hidden sm:inline">
+                            {downloadProgress?.status === 'zipping'
+                              ? '압축 중...'
+                              : `처리 중 ${downloadProgress?.current || 0}/${downloadProgress?.total || 0}`
+                            }
+                          </span>
+                          <span className="sm:hidden">{downloadProgress?.current || 0}/{downloadProgress?.total || 0}</span>
                         </>
                       ) : (
                         <>
-                          <Sparkles className="w-4 h-4" />
-                          다운로드
+                          <Download className="w-3.5 sm:w-4 h-3.5 sm:h-4" />
+                          <span className="hidden sm:inline">다운로드</span>
                         </>
                       )}
                     </span>
@@ -1488,16 +1431,10 @@ export default function BatchFlowMaker({ onBack }) {
                 </>
               )}
               <button
-                onClick={() => setShowAISettings(true)}
-                className="p-2.5 text-white/50 hover:text-white hover:bg-white/10 rounded-xl transition-all"
-              >
-                <Settings className="w-5 h-5" />
-              </button>
-              <button
                 onClick={handleReset}
-                className="p-2.5 text-white/50 hover:text-white hover:bg-white/10 rounded-xl transition-all"
+                className="p-2 sm:p-2.5 text-white/50 hover:text-white hover:bg-white/10 rounded-lg sm:rounded-xl transition-all"
               >
-                <RotateCcw className="w-5 h-5" />
+                <RotateCcw className="w-4 sm:w-5 h-4 sm:h-5" />
               </button>
             </div>
           </div>
@@ -1505,20 +1442,20 @@ export default function BatchFlowMaker({ onBack }) {
       </div>
 
       {/* Main Content */}
-      <div className="relative max-w-7xl mx-auto px-4 py-4">
+      <div className="relative max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
         {/* Step 1: Structure Selection */}
         {step === 1 && (
-          <div className="space-y-6">
-            <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold text-white mb-2">어떤 구조로 만들까요?</h2>
-              <p className="text-white/60">목적에 맞는 카드뉴스 구조를 선택하세요</p>
+          <div className="space-y-4 sm:space-y-6">
+            <div className="text-center mb-4 sm:mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-white mb-1 sm:mb-2">어떤 구조로 만들까요?</h2>
+              <p className="text-sm sm:text-base text-white/60">목적에 맞는 카드뉴스 구조를 선택하세요</p>
             </div>
 
-            {/* Category Filter */}
-            <div className="flex flex-wrap gap-2 justify-center mb-4">
+            {/* Category Filter - Horizontal scroll on mobile */}
+            <div className="flex gap-2 justify-start sm:justify-center overflow-x-auto pb-2 -mx-3 px-3 sm:mx-0 sm:px-0 sm:flex-wrap hide-scrollbar">
               <button
                 onClick={() => setCategoryFilter('all')}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+                className={`flex-shrink-0 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition ${
                   categoryFilter === 'all' ? 'bg-purple-500 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20'
                 }`}
               >
@@ -1528,7 +1465,7 @@ export default function BatchFlowMaker({ onBack }) {
                 <button
                   key={key}
                   onClick={() => setCategoryFilter(key)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+                  className={`flex-shrink-0 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition ${
                     categoryFilter === key ? 'bg-purple-500 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20'
                   }`}
                 >
@@ -1537,8 +1474,8 @@ export default function BatchFlowMaker({ onBack }) {
               ))}
             </div>
 
-            {/* Structure Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            {/* Structure Grid - 2 cols on mobile */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5 sm:gap-4">
               {filteredStructures.map(structure => (
                 <TemplatePreviewCard
                   key={structure.id}
@@ -1553,77 +1490,68 @@ export default function BatchFlowMaker({ onBack }) {
 
         {/* Step 2: Editor + Preview */}
         {step === 2 && selectedStructure && (
-          <div className="grid lg:grid-cols-2 gap-5 h-[calc(100vh-120px)]">
+          <div className="flex flex-col lg:grid lg:grid-cols-2 gap-3 sm:gap-5 h-[calc(100vh-110px)] sm:h-[calc(100vh-120px)]">
+
+            {/* Mobile Tab Navigation */}
+            <div className="lg:hidden flex items-center gap-2 mb-1">
+              <button
+                onClick={() => setMobileView('input')}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-medium text-sm transition-all ${
+                  mobileView === 'input'
+                    ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
+                    : 'bg-white/5 text-white/50 border border-white/10'
+                }`}
+              >
+                <Edit3 className="w-4 h-4" />
+                내용 입력
+              </button>
+              <button
+                onClick={() => setMobileView('preview')}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-medium text-sm transition-all ${
+                  mobileView === 'preview'
+                    ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
+                    : 'bg-white/5 text-white/50 border border-white/10'
+                }`}
+              >
+                <Eye className="w-4 h-4" />
+                미리보기
+                <span className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded-full">
+                  {previewIndex + 1}/{Object.keys(contentData).length}
+                </span>
+              </button>
+            </div>
+
             {/* Left Panel: Input Form - Darker for contrast */}
-            <div className="bg-black/40 backdrop-blur-sm border border-white/[0.06] rounded-2xl p-4 flex flex-col overflow-hidden shadow-xl">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
-                    <Edit3 className="w-4 h-4 text-purple-400" />
+            <div className={`bg-black/40 backdrop-blur-sm border border-white/[0.06] rounded-xl sm:rounded-2xl p-3 sm:p-4 flex flex-col overflow-hidden shadow-xl ${
+              mobileView === 'input' ? 'flex' : 'hidden lg:flex'
+            }`}>
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                  <div className="w-6 sm:w-7 h-6 sm:h-7 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
+                    <Edit3 className="w-3.5 sm:w-4 h-3.5 sm:h-4 text-purple-400" />
                   </div>
-                  내용 입력
+                  <span className="hidden sm:inline">내용 입력</span>
+                  <span className="sm:hidden">{selectedStructure.name}</span>
                 </h2>
                 <button
                   onClick={() => setStep(1)}
-                  className="text-xs text-white/40 hover:text-white/80 flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-white/5 transition-all"
+                  className="text-[10px] sm:text-xs text-white/40 hover:text-white/80 flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-white/5 transition-all"
                 >
-                  <ChevronLeft className="w-3 h-3" /> 구조 변경
+                  <ChevronLeft className="w-3 h-3" /> <span className="hidden sm:inline">구조</span> 변경
                 </button>
               </div>
 
-              {/* AI Topic Input */}
-              <div className="mb-3 p-3 bg-purple-500/10 border border-purple-500/30 rounded-lg">
-                <div className="flex gap-2 mb-2">
-                  <input
-                    type="text"
-                    value={topic}
-                    onChange={(e) => setTopic(e.target.value)}
-                    placeholder="주제 입력 (예: 다이어트 꿀팁)"
-                    className="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm placeholder-white/40 focus:outline-none focus:border-purple-500"
-                  />
-                  <button
-                    onClick={handleGenerateAI}
-                    disabled={isGenerating}
-                    className="px-3 py-2 bg-purple-500 text-white rounded-lg font-medium text-sm hover:bg-purple-600 transition disabled:opacity-50 flex items-center gap-1"
-                  >
-                    <Wand2 className="w-4 h-4" />
-                    {isGenerating ? '...' : 'AI'}
-                  </button>
-                </div>
-                {topic && (
-                  <button
-                    onClick={handleGetTitleSuggestions}
-                    className="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1"
-                  >
-                    <Sparkles className="w-3 h-3" /> 터지는 제목 추천
-                  </button>
-                )}
-                {aiSuggestions.length > 0 && (
-                  <div className="mt-2 space-y-1 max-h-24 overflow-y-auto">
-                    {aiSuggestions.map((s, i) => (
-                      <button
-                        key={i}
-                        onClick={() => applyTitleSuggestion(s.suggestion)}
-                        className="block w-full text-left px-2 py-1 bg-white/5 rounded text-xs text-white/80 hover:bg-white/10 transition truncate"
-                      >
-                        {s.suggestion}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
               {/* Slide Forms */}
-              <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
+              <div className="flex-1 overflow-y-auto space-y-2 sm:space-y-3 pr-1 custom-scrollbar">
                 {selectedStructure.slides.map((slide, index) => (
                   <div
                     key={index}
-                    className={`p-3 rounded-lg border transition cursor-pointer ${
+                    className={`p-2.5 sm:p-3 rounded-lg border transition cursor-pointer ${
                       previewIndex === index
                         ? 'bg-purple-500/20 border-purple-500/50'
                         : 'bg-white/5 border-white/10 hover:border-white/20'
                     }`}
-                    onClick={() => setPreviewIndex(index)}
+                    onClick={() => { setPreviewIndex(index); }}
                   >
                     <div className="flex items-center gap-2 mb-2">
                       <span className="w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center text-[10px] font-bold text-white">
@@ -1796,9 +1724,43 @@ export default function BatchFlowMaker({ onBack }) {
             </div>
 
             {/* Right Panel: Theme + Preview - Lighter for contrast */}
-            <div className="bg-white/[0.02] backdrop-blur-sm border border-white/[0.08] rounded-2xl p-4 flex flex-col overflow-hidden shadow-xl">
+            <div className={`bg-white/[0.02] backdrop-blur-sm border border-white/[0.08] rounded-xl sm:rounded-2xl p-3 sm:p-4 flex flex-col overflow-hidden shadow-xl flex-1 lg:flex-none ${
+              mobileView === 'preview' ? 'flex' : 'hidden lg:flex'
+            }`}>
+              {/* Mobile: Aspect Ratio + Theme Toggle */}
+              <div className="lg:hidden flex items-center justify-between mb-3">
+                {/* Aspect ratio buttons */}
+                <div className="flex gap-1 p-1 bg-white/5 rounded-lg">
+                  <button
+                    onClick={() => setAspectRatio('1:1')}
+                    className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
+                      aspectRatio === '1:1' ? 'bg-white/20 text-white shadow-sm' : 'text-white/50'
+                    }`}
+                  >
+                    1:1
+                  </button>
+                  <button
+                    onClick={() => setAspectRatio('4:5')}
+                    className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
+                      aspectRatio === '4:5' ? 'bg-white/20 text-white shadow-sm' : 'text-white/50'
+                    }`}
+                  >
+                    4:5
+                  </button>
+                </div>
+                {/* Theme toggle */}
+                <button
+                  onClick={() => setShowThemePanel(!showThemePanel)}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white/5 rounded-lg text-white/60 hover:text-white transition-all"
+                >
+                  <Palette className="w-3.5 h-3.5" />
+                  <span className="text-xs">{THEME_PACKS[selectedThemePack]?.name}</span>
+                  {showThemePanel ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                </button>
+              </div>
+
               {/* Theme Selector - Actual Preview Cards */}
-              <div className="mb-4">
+              <div className="mb-3 sm:mb-4 hidden lg:block">
                 <button
                   onClick={() => setShowThemePanel(!showThemePanel)}
                   className="w-full flex items-center justify-between text-white mb-3"
@@ -1829,9 +1791,43 @@ export default function BatchFlowMaker({ onBack }) {
                 )}
               </div>
 
+              {/* Mobile Theme Panel - Horizontal scroll */}
+              {showThemePanel && (
+                <div className="lg:hidden mb-3 -mx-3 px-3">
+                  <div className="flex gap-2 overflow-x-auto pb-2 hide-scrollbar">
+                    {getThemePacksList().map(pack => (
+                      <button
+                        key={pack.id}
+                        onClick={() => setSelectedThemePack(pack.id)}
+                        className={`flex-shrink-0 w-14 rounded-lg overflow-hidden transition-all ${
+                          selectedThemePack === pack.id
+                            ? 'ring-2 ring-purple-500 ring-offset-1 ring-offset-black scale-105'
+                            : 'opacity-70'
+                        }`}
+                      >
+                        <div
+                          className="aspect-[4/5] w-full"
+                          style={{ background: pack.cover.background }}
+                        >
+                          <div className="w-full h-full flex items-center justify-center">
+                            <div
+                              className="text-[6px] font-bold text-center px-1 break-keep"
+                              style={{ color: pack.cover.titleColor }}
+                            >
+                              {pack.name}
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Preview */}
-              <div className="flex-1 flex flex-col">
-                <div className="flex items-center justify-between mb-3">
+              <div className="flex-1 flex flex-col min-h-0">
+                {/* Desktop Header */}
+                <div className="hidden lg:flex items-center justify-between mb-3">
                   <span className="text-sm font-bold text-white flex items-center gap-2">
                     <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center">
                       <Eye className="w-3.5 h-3.5 text-cyan-400" />
@@ -1850,16 +1846,16 @@ export default function BatchFlowMaker({ onBack }) {
                   </div>
                 </div>
 
-                {/* Main Preview - Actual Instagram Size Preview */}
-                <div className="flex-1 flex items-center justify-center py-2">
-                  <div className="relative">
-                    {/* Preview container with shadow */}
+                {/* Main Preview - Responsive Size */}
+                <div className="flex-1 flex items-center justify-center py-2 min-h-0">
+                  <div className="relative w-full flex items-center justify-center">
+                    {/* Preview container with shadow - responsive sizing */}
                     <div
                       ref={moveableRef}
-                      className="rounded-lg overflow-hidden bg-zinc-900 relative shadow-2xl shadow-black/50 ring-1 ring-white/10"
+                      className="rounded-lg overflow-hidden bg-zinc-900 relative shadow-2xl shadow-black/50 ring-1 ring-white/10 max-w-full"
                       style={{
-                        width: aspectRatio === '1:1' ? '324px' : '324px',
-                        height: aspectRatio === '1:1' ? '324px' : '405px'
+                        width: 'min(324px, calc(100vw - 48px))',
+                        aspectRatio: aspectRatio === '1:1' ? '1/1' : '4/5'
                       }}
                       onMouseMove={(e) => {
                         if (!contentData[previewIndex]?.objectImage) return;
@@ -1871,32 +1867,42 @@ export default function BatchFlowMaker({ onBack }) {
                           updateDragPosition(previewIndex, 'object', Math.max(10, Math.min(90, x)), Math.max(10, Math.min(90, y)));
                         }
                       }}
+                      onTouchMove={(e) => {
+                        if (!contentData[previewIndex]?.objectImage) return;
+                        const touch = e.touches[0];
+                        if (touch) {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          const x = ((touch.clientX - rect.left) / rect.width) * 100;
+                          const y = ((touch.clientY - rect.top) / rect.height) * 100;
+                          updateDragPosition(previewIndex, 'object', Math.max(10, Math.min(90, x)), Math.max(10, Math.min(90, y)));
+                        }
+                      }}
                     >
                       {contentData[previewIndex] && renderSlidePreview(contentData[previewIndex], previewIndex, false, true)}
                     </div>
 
-                    {/* Size indicator */}
-                    <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] text-white/30">
+                    {/* Size indicator - Desktop only */}
+                    <div className="hidden sm:block absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] text-white/30">
                       {aspectRatio === '1:1' ? '1080 × 1080' : '1080 × 1350'} px
                     </div>
                   </div>
                 </div>
 
-                {/* Slide Navigator */}
-                <div className="flex items-center justify-center gap-2 mt-3">
+                {/* Slide Navigator - Mobile optimized */}
+                <div className="flex items-center justify-center gap-3 sm:gap-2 mt-2 sm:mt-3">
                   <button
                     onClick={() => setPreviewIndex(Math.max(0, previewIndex - 1))}
                     disabled={previewIndex === 0}
-                    className="p-1 text-white/50 hover:text-white disabled:opacity-30"
+                    className="p-2 sm:p-1 text-white/50 hover:text-white disabled:opacity-30 rounded-lg hover:bg-white/5 transition-all"
                   >
-                    <ChevronLeft className="w-5 h-5" />
+                    <ChevronLeft className="w-6 sm:w-5 h-6 sm:h-5" />
                   </button>
-                  <div className="flex gap-1">
+                  <div className="flex gap-1.5 sm:gap-1">
                     {Object.keys(contentData).map((_, i) => (
                       <button
                         key={i}
                         onClick={() => setPreviewIndex(i)}
-                        className={`w-2 h-2 rounded-full transition ${
+                        className={`w-2.5 sm:w-2 h-2.5 sm:h-2 rounded-full transition ${
                           previewIndex === i ? 'bg-purple-500' : 'bg-white/30 hover:bg-white/50'
                         }`}
                       />
@@ -1905,14 +1911,14 @@ export default function BatchFlowMaker({ onBack }) {
                   <button
                     onClick={() => setPreviewIndex(Math.min(Object.keys(contentData).length - 1, previewIndex + 1))}
                     disabled={previewIndex === Object.keys(contentData).length - 1}
-                    className="p-1 text-white/50 hover:text-white disabled:opacity-30"
+                    className="p-2 sm:p-1 text-white/50 hover:text-white disabled:opacity-30 rounded-lg hover:bg-white/5 transition-all"
                   >
-                    <ChevronRight className="w-5 h-5" />
+                    <ChevronRight className="w-6 sm:w-5 h-6 sm:h-5" />
                   </button>
                 </div>
 
-                {/* Mini Thumbnails */}
-                <div className="flex gap-1.5 mt-3 overflow-x-auto pb-1 px-1">
+                {/* Mini Thumbnails - Horizontal scroll */}
+                <div className="flex gap-1.5 sm:gap-1.5 mt-2 sm:mt-3 overflow-x-auto pb-2 sm:pb-1 px-1 -mx-1 hide-scrollbar">
                   {Object.entries(contentData).map(([idx, data]) => {
                     const themePack = THEME_PACKS[selectedThemePack] || THEME_PACKS['modernMinimal'];
                     return (
@@ -1922,10 +1928,10 @@ export default function BatchFlowMaker({ onBack }) {
                         className={`flex-shrink-0 rounded-lg overflow-hidden transition-all ${
                           previewIndex === parseInt(idx)
                             ? 'ring-2 ring-purple-500 ring-offset-1 ring-offset-black scale-105'
-                            : 'opacity-60 hover:opacity-100 hover:scale-102'
+                            : 'opacity-60 hover:opacity-100'
                         }`}
                         style={{
-                          width: '44px',
+                          width: '40px',
                           aspectRatio: aspectRatio === '1:1' ? '1/1' : '4/5'
                         }}
                       >
@@ -1937,6 +1943,17 @@ export default function BatchFlowMaker({ onBack }) {
                       </button>
                     );
                   })}
+                </div>
+
+                {/* Mobile: Quick edit current slide button */}
+                <div className="lg:hidden mt-3 pt-3 border-t border-white/10">
+                  <button
+                    onClick={() => setMobileView('input')}
+                    className="w-full py-2.5 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                    슬라이드 {previewIndex + 1} 편집하기
+                  </button>
                 </div>
               </div>
             </div>
@@ -1959,52 +1976,6 @@ export default function BatchFlowMaker({ onBack }) {
         )}
       </div>
 
-      {/* AI Settings Modal */}
-      {showAISettings && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowAISettings(false)}>
-          <div className="bg-slate-800 rounded-2xl max-w-md w-full p-6 border border-white/10" onClick={e => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <Settings className="w-5 h-5 text-purple-400" />
-                AI 설정
-              </h2>
-              <button onClick={() => setShowAISettings(false)} className="p-1 text-white/50 hover:text-white">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-white/80 mb-2">Gemini API Key</label>
-                <input
-                  type="password"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  placeholder="AIza..."
-                  className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-purple-500"
-                />
-                <p className="text-xs text-white/50 mt-2">Google AI Studio에서 무료 발급</p>
-              </div>
-
-              <a
-                href="https://aistudio.google.com/app/apikey"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block text-sm text-purple-400 hover:text-purple-300"
-              >
-                API 키 발급받기 →
-              </a>
-
-              <button
-                onClick={handleSaveApiKey}
-                className="w-full py-2 bg-purple-500 text-white rounded-lg font-bold hover:bg-purple-600 transition"
-              >
-                저장
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
